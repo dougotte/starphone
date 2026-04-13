@@ -13,6 +13,7 @@ type Product = {
   storage: string;
   color: string;
   in_stock: boolean;
+  tipo?: string;
 };
 
 type ProductListProps = {
@@ -71,7 +72,6 @@ export default function ProductList({ products, onAddToCart, loading }: ProductL
             key={product.id}
             className="px-6 py-3 hover:bg-gray-50 transition-colors"
           >
-            {/* Desktop Layout */}
             <div className="hidden md:grid grid-cols-12 gap-4 items-center">
               <div className="col-span-7 flex items-center gap-3">
                 {product.image_url && (
@@ -83,8 +83,13 @@ export default function ProductList({ products, onAddToCart, loading }: ProductL
                 )}
                 <div className="min-w-0">
                   <h3 className="font-semibold text-gray-900 text-sm truncate">{product.name}</h3>
+                  {product.tipo && (
+                    <span className="inline-block text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded mt-0.5">
+                      {product.tipo}
+                    </span>
+                  )}
                   {product.description && (
-                    <p className="text-xs text-gray-600 line-clamp-1">
+                    <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">
                       {product.description}
                     </p>
                   )}
@@ -92,7 +97,7 @@ export default function ProductList({ products, onAddToCart, loading }: ProductL
               </div>
 
               <div className="col-span-2 text-center">
-                <p className="text-lg font-bold text-black">
+                <p className="text-lg font-bold text-black whitespace-nowrap">
                   R$ {product.price.toFixed(2)}
                 </p>
               </div>
@@ -126,16 +131,20 @@ export default function ProductList({ products, onAddToCart, loading }: ProductL
               </div>
             </div>
 
-            {/* Mobile Layout */}
             <div className="md:hidden flex items-start gap-3">
               <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
                 <Smartphone size={18} className="text-gray-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1" style={{minHeight: '2.5rem'}}>
+                <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-0.5">
                   {product.name}
                 </h3>
-                <p className="text-base font-bold text-black mt-1">
+                {product.tipo && (
+                  <span className="inline-block text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded mb-1">
+                    {product.tipo}
+                  </span>
+                )}
+                <p className="text-base font-bold text-black whitespace-nowrap">
                   R$ {product.price.toFixed(2)}
                 </p>
               </div>

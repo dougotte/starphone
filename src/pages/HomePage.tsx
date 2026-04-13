@@ -88,8 +88,7 @@ export default function HomePage({
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('in_stock', true)
-      .order('created_at', { ascending: true });
+      .order('order_position', { ascending: true });
 
     if (error) {
       console.error('Error loading products:', error);
