@@ -42,7 +42,7 @@ export default function CheckoutPage({
   const [message, setMessage] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'dinheiro'>('pix');
   const [showPixModal, setShowPixModal] = useState(false);
-  const [pixKey, setPixKey] = useState('19999921698');
+  const [pixKey, setPixKey] = useState('19997133652');
   const [copied, setCopied] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
@@ -765,9 +765,11 @@ export default function CheckoutPage({
               <p className="text-center text-gray-600 mb-4">Escaneie o QR Code ou copie a chave PIX:</p>
 
               <div className="bg-white p-4 rounded-lg mb-4 flex justify-center">
-                <div className="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-500 text-sm text-center px-4">QR Code PIX<br/>Fictício</p>
-                </div>
+                <img
+                  src="/qrcode-pix.jpeg"
+                  alt="QR Code PIX"
+                  className="w-48 h-48 object-contain rounded-lg"
+                />
               </div>
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white p-4 rounded-lg">
