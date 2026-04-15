@@ -321,20 +321,6 @@ export default function HomePage({
           <section className="lg:col-span-6">
             <div className="mb-6 lg:hidden space-y-3">
               <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => {
-                    setSelectedBrand(null);
-                    setSelectedTipo(null);
-                  }}
-                  className={`flex-1 min-w-[30%] px-3 py-2 rounded-lg font-semibold transition text-sm ${
-                    selectedBrand === null
-                      ? 'bg-[#00ff00] text-black'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  <span className="text-base mr-1">📱</span>
-                  Todos
-                </button>
                 {brands.map((brand) => (
                   <button
                     key={brand.name}

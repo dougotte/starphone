@@ -19,20 +19,6 @@ export default function BrandFilter({ brands, selectedBrand, onSelectBrand, sele
     <div className="bg-white rounded-2xl p-6 shadow-lg h-fit sticky top-24">
       <h2 className="text-2xl font-bold mb-6">Marcas</h2>
       <div className="space-y-3">
-        <button
-          onClick={() => {
-            onSelectBrand(null);
-            onSelectTipo?.(null);
-          }}
-          className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition ${
-            selectedBrand === null
-              ? 'bg-[#00ff00] text-black'
-              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-          }`}
-        >
-          <span className="text-lg mr-2">📱</span>
-          Todos os Produtos
-        </button>
         {brands.map((brand) => (
           <div key={brand.name} className="space-y-2">
             <button

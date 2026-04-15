@@ -238,94 +238,6 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     }
   };
 
-  const handleCSVImport = async (file: File) => {
-    setMessage('Importando produtos...');
-
-    try {
-      const text = await file.text();
-      const lines = text.split('\n').filter(line => line.trim());
-
-      if (lines.length < 2) throw new Error('CSV vazio ou inválido');
-
-      const { data: categoriesData } = await supabase
-        .from('product_categories')
-        .select('name')
-        .eq('is_active', true);
-
-      const categoryMap = new Map<string, string>();
-      categoriesData?.forEach(cat => {
-        categoryMap.set(cat.name.toUpperCase(), cat.name);
-      });
-
-      const parseCSVLine = (line: string): string[] => {
-        const values: string[] = [];
-        let currentValue = '';
-        let insideQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-          const char = line[i];
-          if (char === '"') {
-            insideQuotes = !insideQuotes;
-          } else if (char === ',' && !insideQuotes) {
-            values.push(currentValue.trim());
-            currentValue = '';
-          } else {
-            currentValue += char;
-          }
-        }
-        values.push(currentValue.trim());
-        return values;
-      };
-
-      const normalizeBrand = (brand: string) => categoryMap.get(brand.toUpperCase()) || brand;
-
-      const maxPos = products.length > 0
-        ? Math.max(...products.map(p => p.order_position || 0))
-        : 0;
-
-      const importedProducts: Product[] = [];
-      for (let i = 1; i < lines.length; i++) {
-        const values = parseCSVLine(lines[i]);
-        if (values.length < 9) continue;
-
-        const parsePrice = (value: string) => {
-          const cleaned = value.replace(/[R$\s"]/g, '').replace('.', '').replace(',', '.');
-          return parseFloat(cleaned) || 0;
-        };
-
-        const valorCompra = parsePrice(values[4]);
-        const lucro = parsePrice(values[6]);
-
-        const product: Product = {
-          brand: normalizeBrand(values[0] || ''),
-          tipo: values[1] || '',
-          name: values[2] || '',
-          price: valorCompra + lucro,
-          valor_compra: valorCompra,
-          lucro: lucro,
-          estoque: parseInt(values[7]) || 0,
-          descricao: values[8] || '',
-          description: values[8] || '',
-          stock: parseInt(values[7]) || 0,
-          image_url: '',
-          segunda_opcao: values[9] || '',
-          order_position: maxPos + i,
-        };
-
-        importedProducts.push(product);
-      }
-
-      if (importedProducts.length === 0) throw new Error('Nenhum produto válido encontrado no CSV');
-
-      const { error } = await supabase.from('products').insert(importedProducts);
-      if (error) throw error;
-
-      setMessage(`${importedProducts.length} produtos importados com sucesso!`);
-      await loadProducts();
-    } catch (error) {
-      setMessage('Erro ao importar CSV: ' + (error as any).message);
-    }
-  };
-
   const handleDeleteProduct = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este produto?')) return;
     const { error } = await supabase.from('products').delete().eq('id', id);
@@ -749,25 +661,6 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
 
             {activeTab === 'products' && (
               <div>
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                    <Upload size={20} className="text-blue-600" />
-                    Importação em Massa (CSV)
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Formato: MARCA, TIPO, PRODUTO, VALOR, VALOR DE COMPRA, (vazio), LUCRO, ESTOQUE, DESCRIÇÃO, SEGUNDA OPÇÃO
-                  </p>
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleCSVImport(file);
-                    }}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:outline-none bg-white"
-                  />
-                </div>
-
                 <h2 className="text-2xl font-bold mb-6">
                   {editingProduct ? 'Editar Produto' : 'Cadastrar Produto'}
                 </h2>
