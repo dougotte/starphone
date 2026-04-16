@@ -126,6 +126,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
   const [productBrandFilter, setProductBrandFilter] = useState<string>('all');
+  const [productSearch, setProductSearch] = useState('');
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
@@ -288,8 +289,17 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
   };
 
   const getFilteredProducts = () => {
-    if (productBrandFilter === 'all') return products;
-    return products.filter(p => p.brand === productBrandFilter);
+    let filtered = productBrandFilter === 'all' ? products : products.filter(p => p.brand === productBrandFilter);
+    if (productSearch.trim()) {
+      const q = productSearch.toLowerCase();
+      filtered = filtered.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.brand || '').toLowerCase().includes(q) ||
+        (p.tipo || '').toLowerCase().includes(q) ||
+        (p.segunda_opcao || '').toLowerCase().includes(q)
+      );
+    }
+    return filtered;
   };
 
   const handleDragStart = (id: string) => {
@@ -811,9 +821,20 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                   </div>
                 </form>
 
+                <div className="mb-4 relative">
+                  <input
+                    type="text"
+                    placeholder="Buscar produto por nome, marca ou tipo..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:outline-none bg-white"
+                  />
+                  <Search className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                </div>
+
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="text-xl font-bold">Produtos Cadastrados ({products.length})</h3>
+                    <h3 className="text-xl font-bold">Produtos Cadastrados ({filteredProducts.length}/{products.length})</h3>
                     <div className="flex gap-2 flex-wrap">
                       <button
                         onClick={() => setProductBrandFilter('all')}
@@ -896,7 +917,10 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                         <p className="text-sm text-gray-600">
                           {product.brand}
                           {product.tipo ? ` • ${product.tipo}` : ''}
-                          {` • R$ ${product.price.toFixed(2)}`}
+                          {' • '}
+                          <span className={product.price === 0 ? 'text-red-600 font-semibold' : ''}>
+                            R$ {product.price.toFixed(2)}
+                          </span>
                           {` • Estoque: ${product.estoque ?? product.stock}`}
                         </p>
                       </div>
