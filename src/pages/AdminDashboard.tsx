@@ -65,6 +65,7 @@ type Category = {
 type AdminUser = {
   id?: string;
   username: string;
+  email: string;
   password: string;
   name: string;
 };
@@ -115,6 +116,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
 
   const [adminForm, setAdminForm] = useState<AdminUser>({
     username: '',
+    email: '',
     password: '',
     name: '',
   });
@@ -574,21 +576,21 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     e.preventDefault();
     setMessage('');
 
-    if (!adminForm.username || !adminForm.password || !adminForm.name) {
+    if (!adminForm.email || !adminForm.password || !adminForm.name) {
       setMessage('Preencha todos os campos');
       return;
     }
 
     try {
       const { error } = await supabase.rpc('create_admin_user', {
-        p_username: adminForm.username,
-        p_password: adminForm.password,
-        p_name: adminForm.name,
+        admin_email: adminForm.email,
+        admin_password: adminForm.password,
+        admin_name: adminForm.name,
       });
 
       if (error) throw error;
       setMessage('Administrador cadastrado!');
-      setAdminForm({ username: '', password: '', name: '' });
+      setAdminForm({ username: '', email: '', password: '', name: '' });
       loadAdmins();
     } catch (error) {
       setMessage('Erro ao cadastrar administrador: ' + (error as any).message);
@@ -1305,12 +1307,12 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome de Usuário</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
                     <input
-                      type="text"
-                      placeholder="Ex: joaosilva"
-                      value={adminForm.username}
-                      onChange={(e) => setAdminForm({ ...adminForm, username: e.target.value })}
+                      type="email"
+                      placeholder="Ex: joao@starphone.com.br"
+                      value={adminForm.email}
+                      onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })}
                       className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:outline-none"
                       required
                     />

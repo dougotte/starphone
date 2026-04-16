@@ -40,11 +40,6 @@ export default function ProductList({ products, onAddToCart, loading }: ProductL
     setQuantities({ ...quantities, [product.id]: 1 });
   };
 
-  const isOutOfStock = (product: Product) => {
-    const qty = product.estoque ?? product.stock ?? (product.in_stock ? 1 : 0);
-    return qty <= 0;
-  };
-
   if (loading) {
     return (
       <div className="bg-white rounded-xl p-8">
@@ -90,15 +85,11 @@ export default function ProductList({ products, onAddToCart, loading }: ProductL
                 )}
                 <div className="min-w-0">
                   <h3 className="font-semibold text-gray-900 text-sm truncate">{product.name}</h3>
-                  {isOutOfStock(product) ? (
-                    <span className="inline-block text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded mt-0.5">
-                      Sem estoque
-                    </span>
-                  ) : product.tipo ? (
+                  {product.tipo && (
                     <span className="inline-block text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded mt-0.5">
                       {product.tipo}
                     </span>
-                  ) : null}
+                  )}
                   {product.description && (
                     <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">
                       {product.description}
@@ -114,37 +105,31 @@ export default function ProductList({ products, onAddToCart, loading }: ProductL
               </div>
 
               <div className="col-span-3">
-                {isOutOfStock(product) ? (
-                  <div className="flex items-center justify-center">
-                    <span className="text-sm text-gray-400 font-medium py-2">Indisponivel</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex items-center border border-gray-300 rounded-lg">
-                      <button
-                        onClick={() => updateQuantity(product.id, getQuantity(product.id) - 1)}
-                        className="px-2 py-1 hover:bg-gray-100 transition"
-                      >
-                        <Minus size={14} />
-                      </button>
-                      <span className="px-3 py-1 min-w-[2.5rem] text-center font-medium border-x border-gray-300 text-sm">
-                        {getQuantity(product.id)}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(product.id, getQuantity(product.id) + 1)}
-                        className="px-2 py-1 hover:bg-gray-100 transition"
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center border border-gray-300 rounded-lg">
                     <button
-                      onClick={() => handleAddToCart(product)}
-                      className="bg-[#00ff00] text-black px-4 py-1.5 rounded-lg font-semibold hover:bg-[#00dd00] transition text-sm w-full"
+                      onClick={() => updateQuantity(product.id, getQuantity(product.id) - 1)}
+                      className="px-2 py-1 hover:bg-gray-100 transition"
                     >
-                      + Adicionar
+                      <Minus size={14} />
+                    </button>
+                    <span className="px-3 py-1 min-w-[2.5rem] text-center font-medium border-x border-gray-300 text-sm">
+                      {getQuantity(product.id)}
+                    </span>
+                    <button
+                      onClick={() => updateQuantity(product.id, getQuantity(product.id) + 1)}
+                      className="px-2 py-1 hover:bg-gray-100 transition"
+                    >
+                      <Plus size={14} />
                     </button>
                   </div>
-                )}
+                  <button
+                    onClick={() => handleAddToCart(product)}
+                    className="bg-[#00ff00] text-black px-4 py-1.5 rounded-lg font-semibold hover:bg-[#00dd00] transition text-sm w-full"
+                  >
+                    + Adicionar
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -156,49 +141,39 @@ export default function ProductList({ products, onAddToCart, loading }: ProductL
                 <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-0.5">
                   {product.name}
                 </h3>
-                {isOutOfStock(product) ? (
-                  <span className="inline-block text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded mb-1">
-                    Sem estoque
-                  </span>
-                ) : product.tipo ? (
+                {product.tipo && (
                   <span className="inline-block text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded mb-1">
                     {product.tipo}
                   </span>
-                ) : null}
+                )}
                 <p className="text-base font-bold text-black whitespace-nowrap">
                   R$ {product.price.toFixed(2)}
                 </p>
               </div>
               <div className="flex flex-col items-end gap-2">
-                {isOutOfStock(product) ? (
-                  <span className="text-sm text-gray-400 font-medium py-1">Indisponivel</span>
-                ) : (
-                  <>
-                    <div className="flex items-center border border-gray-300 rounded-lg">
-                      <button
-                        onClick={() => updateQuantity(product.id, getQuantity(product.id) - 1)}
-                        className="px-2 py-1 hover:bg-gray-100 transition"
-                      >
-                        <Minus size={14} />
-                      </button>
-                      <span className="px-2 py-1 min-w-[2rem] text-center font-medium border-x border-gray-300 text-sm">
-                        {getQuantity(product.id)}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(product.id, getQuantity(product.id) + 1)}
-                        className="px-2 py-1 hover:bg-gray-100 transition"
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
-                    <button
-                      onClick={() => handleAddToCart(product)}
-                      className="bg-[#00ff00] text-black px-3 py-1.5 rounded-lg font-semibold hover:bg-[#00dd00] transition text-xs whitespace-nowrap"
-                    >
-                      Adicionar
-                    </button>
-                  </>
-                )}
+                <div className="flex items-center border border-gray-300 rounded-lg">
+                  <button
+                    onClick={() => updateQuantity(product.id, getQuantity(product.id) - 1)}
+                    className="px-2 py-1 hover:bg-gray-100 transition"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="px-2 py-1 min-w-[2rem] text-center font-medium border-x border-gray-300 text-sm">
+                    {getQuantity(product.id)}
+                  </span>
+                  <button
+                    onClick={() => updateQuantity(product.id, getQuantity(product.id) + 1)}
+                    className="px-2 py-1 hover:bg-gray-100 transition"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+                <button
+                  onClick={() => handleAddToCart(product)}
+                  className="bg-[#00ff00] text-black px-3 py-1.5 rounded-lg font-semibold hover:bg-[#00dd00] transition text-xs whitespace-nowrap"
+                >
+                  Adicionar
+                </button>
               </div>
             </div>
           </div>
