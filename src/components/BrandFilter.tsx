@@ -42,21 +42,6 @@ export default function BrandFilter({ brands, selectedBrand, onSelectBrand, sele
 
             {selectedBrand === brand.name && onSelectTipo && (
               <div className="pl-4 space-y-1">
-                <button
-                  onClick={() => onSelectTipo(null)}
-                  className={`w-full text-left px-3 py-2 rounded-lg font-medium transition text-sm ${
-                    selectedTipo === null
-                      ? 'text-white ring-2 ring-[#00ff00]'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                  }`}
-                  style={{
-                    backgroundColor: selectedTipo === null
-                      ? brand.color || '#000'
-                      : undefined
-                  }}
-                >
-                  Todos
-                </button>
                 {tipos.map((tipo) => (
                   <button
                     key={tipo}

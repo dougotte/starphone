@@ -348,21 +348,6 @@ export default function HomePage({
                 <div className="bg-white rounded-lg p-3 shadow-md">
                   <p className="text-xs font-semibold text-gray-600 mb-2">Filtrar por tipo:</p>
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => setSelectedTipo(null)}
-                      className={`px-3 py-1.5 rounded-lg font-medium transition text-xs ${
-                        selectedTipo === null
-                          ? 'ring-2 ring-[#00ff00] text-white'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                      }`}
-                      style={{
-                        backgroundColor: selectedTipo === null
-                          ? brands.find(b => b.name === selectedBrand)?.color || '#000'
-                          : undefined
-                      }}
-                    >
-                      Todos
-                    </button>
                     {['TELA', 'BATERIA', 'DOCK DE CARGA', 'TAMPA TRASEIRA', 'PERIFÉRICOS'].map((tipo) => (
                       <button
                         key={tipo}
@@ -399,11 +384,21 @@ export default function HomePage({
               </div>
             </div>
 
-            <ProductList
-              products={filteredProducts}
-              onAddToCart={addToCart}
-              loading={loading}
-            />
+            {!selectedTipo && !searchQuery ? (
+              <div className="flex items-center justify-center py-4">
+                <img
+                  src="/home-menu.png"
+                  alt="Escolha uma marca no menu e encontre sua peça"
+                  className="w-full max-w-md rounded-2xl shadow-lg"
+                />
+              </div>
+            ) : (
+              <ProductList
+                products={filteredProducts}
+                onAddToCart={addToCart}
+                loading={loading}
+              />
+            )}
           </section>
 
           <aside className="lg:col-span-3 hidden lg:block">

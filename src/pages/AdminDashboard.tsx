@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, LogOut, Plus, Trash2, Users, Image, Tag, Package, ShoppingBag, Check, X, Printer, MapPin, Upload, GripVertical } from 'lucide-react';
+import { ArrowLeft, LogOut, Plus, Trash2, Users, Image, Tag, Package, ShoppingBag, Check, X, Printer, MapPin, Upload, GripVertical, Search } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -90,6 +90,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'banners' | 'categories' | 'admins'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [orderSearch, setOrderSearch] = useState('');
   const [banners, setBanners] = useState<Banner[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
@@ -458,14 +459,14 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
       .no-print { display: none !important; }
       .label-wrap { width: 10cm; height: 15cm; padding: 0.4cm; overflow: hidden; }
     }
-    body { font-family: Arial, sans-serif; font-size: 9pt; margin: 0; padding: 0; background: #fff; color: #000; }
+    body { font-family: Arial, sans-serif; font-size: 14px; margin: 0; padding: 0; background: #fff; color: #000; }
     .label-wrap { width: 10cm; padding: 0.4cm; }
     .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 6px; }
-    .header h2 { margin: 0; font-size: 11pt; letter-spacing: 1px; }
-    .header p { margin: 2px 0 0; font-size: 8pt; }
+    .header h2 { margin: 0; font-size: 14px; letter-spacing: 1px; }
+    .header p { margin: 2px 0 0; font-size: 14px; }
     .section { margin-bottom: 6px; }
-    .section-label { font-weight: bold; font-size: 7pt; text-transform: uppercase; color: #444; border-bottom: 1px solid #ccc; margin-bottom: 3px; padding-bottom: 1px; }
-    .row { font-size: 8.5pt; margin-bottom: 2px; line-height: 1.3; }
+    .section-label { font-weight: bold; font-size: 14px; text-transform: uppercase; color: #444; border-bottom: 1px solid #ccc; margin-bottom: 3px; padding-bottom: 1px; }
+    .row { font-size: 14px; margin-bottom: 2px; line-height: 1.3; }
     .address-box { border: 1.5px solid #000; padding: 5px 7px; margin-bottom: 6px; border-radius: 2px; }
     .totals { border-top: 2px solid #000; padding-top: 5px; margin-top: 4px; }
     .no-print { text-align: center; margin: 16px 0; }
@@ -922,11 +923,37 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
             {activeTab === 'orders' && (
               <div>
                 <h2 className="text-2xl font-bold mb-6">Gerenciar Pedidos</h2>
+                <div className="mb-4 relative">
+                  <input
+                    type="text"
+                    placeholder="Buscar por nome, e-mail ou telefone do cliente..."
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:outline-none bg-white"
+                  />
+                  <Search className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                </div>
                 <div className="space-y-4">
-                  {orders.length === 0 ? (
+                  {orders.filter(o => {
+                    if (!orderSearch) return true;
+                    const q = orderSearch.toLowerCase();
+                    return (
+                      o.customer_name?.toLowerCase().includes(q) ||
+                      o.customer_email?.toLowerCase().includes(q) ||
+                      o.customer_phone?.toLowerCase().includes(q)
+                    );
+                  }).length === 0 ? (
                     <p className="text-gray-500 text-center py-8">Nenhum pedido encontrado</p>
                   ) : (
-                    orders.map((order) => (
+                    orders.filter(o => {
+                      if (!orderSearch) return true;
+                      const q = orderSearch.toLowerCase();
+                      return (
+                        o.customer_name?.toLowerCase().includes(q) ||
+                        o.customer_email?.toLowerCase().includes(q) ||
+                        o.customer_phone?.toLowerCase().includes(q)
+                      );
+                    }).map((order) => (
                       <div key={order.id} className="border rounded-lg p-6 hover:bg-gray-50">
                         <div className="flex justify-between items-start mb-4">
                           <div>

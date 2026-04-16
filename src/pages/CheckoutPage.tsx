@@ -213,9 +213,9 @@ export default function CheckoutPage({
       setTimeout(() => {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
-          window.location.href = `https://api.whatsapp.com/send?phone=5519995627428&text=${whatsappMessage}`;
+          window.location.href = `https://api.whatsapp.com/send?phone=5519999921698&text=${whatsappMessage}`;
         } else {
-          window.open(`https://wa.me/5519995627428?text=${whatsappMessage}`, '_blank');
+          window.open(`https://wa.me/5519999921698?text=${whatsappMessage}`, '_blank');
         }
       }, 500);
     } catch (error) {
@@ -340,9 +340,9 @@ export default function CheckoutPage({
 
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
-          window.location.href = `https://api.whatsapp.com/send?phone=5519995627428&text=${whatsappMessage}`;
+          window.location.href = `https://api.whatsapp.com/send?phone=5519999921698&text=${whatsappMessage}`;
         } else {
-          window.open(`https://wa.me/5519995627428?text=${whatsappMessage}`, '_blank');
+          window.open(`https://wa.me/5519999921698?text=${whatsappMessage}`, '_blank');
         }
 
         setCompletedOrderData({
