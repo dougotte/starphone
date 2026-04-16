@@ -33,7 +33,12 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
     const { error: signUpError } = await signUp(email, password);
 
     if (signUpError) {
-      setError('Erro ao criar conta. Tente novamente.');
+      const msg = signUpError.message?.toLowerCase() || '';
+      if (msg.includes('already registered') || msg.includes('user already exists') || msg.includes('email already')) {
+        setError('Este e-mail já está cadastrado. Use outro e-mail ou faça login.');
+      } else {
+        setError('Erro ao criar conta. Tente novamente.');
+      }
     }
 
     setLoading(false);
@@ -66,8 +71,27 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
-                  {error}
+                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm">
+                  <p>{error}</p>
+                  {error.includes('já está cadastrado') && (
+                    <div className="mt-2 flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => onNavigate('login')}
+                        className="text-red-800 font-semibold underline hover:no-underline"
+                      >
+                        Fazer login
+                      </button>
+                      <span className="text-red-400">|</span>
+                      <button
+                        type="button"
+                        onClick={() => onNavigate('forgot-password' as any)}
+                        className="text-red-800 font-semibold underline hover:no-underline"
+                      >
+                        Esqueci minha senha
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 

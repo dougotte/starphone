@@ -320,28 +320,49 @@ export default function HomePage({
 
           <section className="lg:col-span-6">
             <div className="mb-6 lg:hidden space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {brands.map((brand) => (
-                  <button
-                    key={brand.name}
-                    onClick={() => {
-                      setSelectedBrand(brand.name);
-                      setSelectedTipo(null);
-                    }}
-                    className={`flex-1 min-w-[30%] px-3 py-2 rounded-lg font-semibold transition text-sm ${
-                      selectedBrand === brand.name
-                        ? 'ring-2 ring-[#00ff00]'
-                        : ''
-                    }`}
-                    style={{
-                      backgroundColor: brand.color || '#f3f4f6',
-                      color: brand.color ? '#fff' : '#374151'
-                    }}
-                  >
-                    <span className="text-base mr-1">{brand.icon}</span>
-                    {brand.name}
-                  </button>
-                ))}
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  {brands.filter(b => b.name === 'iPhone' || b.name === 'Samsung').map((brand) => (
+                    <button
+                      key={brand.name}
+                      onClick={() => {
+                        setSelectedBrand(brand.name);
+                        setSelectedTipo(null);
+                      }}
+                      className={`flex-1 px-3 py-2 rounded-lg font-semibold transition text-sm ${
+                        selectedBrand === brand.name ? 'ring-2 ring-[#00ff00]' : ''
+                      }`}
+                      style={{
+                        backgroundColor: brand.color || '#f3f4f6',
+                        color: brand.color ? '#fff' : '#374151'
+                      }}
+                    >
+                      <span className="text-base mr-1">{brand.icon}</span>
+                      {brand.name}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {brands.filter(b => b.name !== 'iPhone' && b.name !== 'Samsung').map((brand) => (
+                    <button
+                      key={brand.name}
+                      onClick={() => {
+                        setSelectedBrand(brand.name);
+                        setSelectedTipo(null);
+                      }}
+                      className={`flex-1 min-w-[30%] px-3 py-2 rounded-lg font-semibold transition text-sm ${
+                        selectedBrand === brand.name ? 'ring-2 ring-[#00ff00]' : ''
+                      }`}
+                      style={{
+                        backgroundColor: brand.color || '#f3f4f6',
+                        color: brand.color ? '#fff' : '#374151'
+                      }}
+                    >
+                      <span className="text-base mr-1">{brand.icon}</span>
+                      {brand.name}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {selectedBrand && (

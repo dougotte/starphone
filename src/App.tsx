@@ -7,10 +7,11 @@ import AccountPage from './pages/AccountPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
 import CheckoutPage from './pages/CheckoutPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import WhatsAppButton from './components/WhatsAppButton';
 import CookieConsent from './components/CookieConsent';
 
-type Page = 'home' | 'login' | 'register' | 'account' | 'admin-login' | 'admin-dashboard' | 'checkout';
+type Page = 'home' | 'login' | 'register' | 'account' | 'admin-login' | 'admin-dashboard' | 'checkout' | 'forgot-password';
 
 type CartItem = {
   id: string;
@@ -77,6 +78,8 @@ function AppContent() {
         return <AdminDashboard onNavigate={setCurrentPage} />;
       case 'checkout':
         return <CheckoutPage onNavigate={setCurrentPage} cart={cart} onCheckoutComplete={() => setCart([])} />;
+      case 'forgot-password':
+        return <ForgotPasswordPage onNavigate={setCurrentPage} />;
       default:
         return <HomePage onNavigate={setCurrentPage} cart={cart} setCart={setCart} />;
     }

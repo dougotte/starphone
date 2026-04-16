@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-type PageType = 'home' | 'login' | 'register' | 'account' | 'admin-login' | 'admin-dashboard';
+type PageType = 'home' | 'login' | 'register' | 'account' | 'admin-login' | 'admin-dashboard' | 'forgot-password';
 
 export default function LoginPage({ onNavigate }: { onNavigate: (page: PageType) => void }) {
   const { signIn } = useAuth();
@@ -89,6 +89,16 @@ export default function LoginPage({ onNavigate }: { onNavigate: (page: PageType)
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
+              </div>
+
+              <div className="text-right -mt-4">
+                <button
+                  type="button"
+                  onClick={() => onNavigate('forgot-password')}
+                  className="text-sm text-gray-500 hover:text-[#00cc00] transition"
+                >
+                  Esqueci minha senha
+                </button>
               </div>
 
               <button
