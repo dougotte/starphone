@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { supabase } from './lib/supabase';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -8,10 +9,11 @@ import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
 import CheckoutPage from './pages/CheckoutPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import WhatsAppButton from './components/WhatsAppButton';
 import CookieConsent from './components/CookieConsent';
 
-type Page = 'home' | 'login' | 'register' | 'account' | 'admin-login' | 'admin-dashboard' | 'checkout' | 'forgot-password';
+type Page = 'home' | 'login' | 'register' | 'account' | 'admin-login' | 'admin-dashboard' | 'checkout' | 'forgot-password' | 'reset-password';
 
 type CartItem = {
   id: string;
@@ -28,7 +30,16 @@ function AppContent() {
   const { user, loading, isAdmin } = useAuth();
 
   useEffect(() => {
-    if (!loading) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setCurrentPage('reset-password');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!loading && currentPage !== 'reset-password') {
       if (currentPage === 'login' && user) {
         if (redirectToCheckout) {
           setCurrentPage('checkout');
@@ -80,6 +91,8 @@ function AppContent() {
         return <CheckoutPage onNavigate={setCurrentPage} cart={cart} onCheckoutComplete={() => setCart([])} />;
       case 'forgot-password':
         return <ForgotPasswordPage onNavigate={setCurrentPage} />;
+      case 'reset-password':
+        return <ResetPasswordPage onNavigate={setCurrentPage} />;
       default:
         return <HomePage onNavigate={setCurrentPage} cart={cart} setCart={setCart} />;
     }
