@@ -390,14 +390,21 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
 
   const handleShopSettingToggle = async (field: 'disable_out_of_stock' | 'disable_zero_price', value: boolean) => {
     const bannerId = banners[0]?.id;
-    if (!bannerId) return;
+    if (!bannerId) {
+      await loadBanners();
+      return;
+    }
+    if (field === 'disable_out_of_stock') setDisableOutOfStock(value);
+    else setDisableZeroPrice(value);
+
     const { error } = await supabase
       .from('banner_settings')
       .update({ [field]: value, updated_at: new Date().toISOString() })
       .eq('id', bannerId);
-    if (!error) {
-      if (field === 'disable_out_of_stock') setDisableOutOfStock(value);
-      else setDisableZeroPrice(value);
+    if (error) {
+      if (field === 'disable_out_of_stock') setDisableOutOfStock(!value);
+      else setDisableZeroPrice(!value);
+      setMessage('Erro ao salvar configuração: ' + error.message);
     }
   };
 

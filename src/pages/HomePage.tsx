@@ -63,6 +63,26 @@ export default function HomePage({
     loadBrands();
     loadAllProducts();
     loadBannerSettings();
+
+    const channel = supabase
+      .channel('banner_settings_changes')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'banner_settings' },
+        (payload) => {
+          const data = payload.new as any;
+          setBannerSettings(prev => ({
+            ...prev,
+            disable_out_of_stock: data.disable_out_of_stock ?? false,
+            disable_zero_price: data.disable_zero_price ?? false,
+          }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
