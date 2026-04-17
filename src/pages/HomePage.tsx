@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ShoppingCart as CartIcon, Menu, X, Instagram, MessageCircle, Search, User, LogOut, MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import BrandFilter from '../components/BrandFilter';
+import BrandFilter, { getTiposForBrand } from '../components/BrandFilter';
 import ProductList from '../components/ProductList';
 import ShoppingCart from '../components/ShoppingCart';
 import WhatsAppButton from '../components/WhatsAppButton';
@@ -54,7 +54,9 @@ export default function HomePage({
     title: 'PEÇAS & ACESSÓRIOS',
     subtitle: 'Hardware de qualidade para o seu celular',
     location_info: 'Conchal - SP • (19) 99992-1698',
-    background_image_url: ''
+    background_image_url: '',
+    disable_out_of_stock: false,
+    disable_zero_price: false,
   });
 
   useEffect(() => {
@@ -110,7 +112,9 @@ export default function HomePage({
         title: data.title,
         subtitle: data.subtitle,
         location_info: data.location_info,
-        background_image_url: data.background_image_url || ''
+        background_image_url: data.background_image_url || '',
+        disable_out_of_stock: data.disable_out_of_stock ?? false,
+        disable_zero_price: data.disable_zero_price ?? false,
       });
     }
   };
@@ -289,7 +293,7 @@ export default function HomePage({
       </header>
 
       <div
-        className="relative text-white py-16 mb-8 overflow-hidden"
+        className="relative text-white py-16 mb-8 overflow-hidden hidden md:block"
         style={{
           backgroundImage: bannerSettings.background_image_url
             ? `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${bannerSettings.background_image_url})`
@@ -369,7 +373,7 @@ export default function HomePage({
                 <div className="bg-white rounded-lg p-3 shadow-md">
                   <p className="text-xs font-semibold text-gray-600 mb-2">Filtrar por tipo:</p>
                   <div className="flex flex-wrap gap-2">
-                    {['TELA', 'BATERIA', 'DOCK DE CARGA', 'TAMPA TRASEIRA', 'PERIFÉRICOS'].map((tipo) => (
+                    {getTiposForBrand(selectedBrand).map((tipo) => (
                       <button
                         key={tipo}
                         onClick={() => setSelectedTipo(tipo)}
@@ -418,6 +422,8 @@ export default function HomePage({
                 products={filteredProducts}
                 onAddToCart={addToCart}
                 loading={loading}
+                disableOutOfStock={bannerSettings.disable_out_of_stock}
+                disableZeroPrice={bannerSettings.disable_zero_price}
               />
             )}
           </section>

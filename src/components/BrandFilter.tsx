@@ -12,7 +12,12 @@ type BrandFilterProps = {
   onSelectTipo?: (tipo: string | null) => void;
 };
 
-const tipos = ['TELA', 'BATERIA', 'DOCK DE CARGA', 'TAMPA TRASEIRA', 'PERIFÉRICOS'];
+const tiposBase = ['TELA', 'BATERIA', 'DOCK DE CARGA', 'TAMPA TRASEIRA', 'PERIFÉRICOS'];
+
+export function getTiposForBrand(brand: string | null): string[] {
+  if (brand === 'iPhone') return [...tiposBase, 'CÂMERA'];
+  return tiposBase;
+}
 
 export default function BrandFilter({ brands, selectedBrand, onSelectBrand, selectedTipo, onSelectTipo }: BrandFilterProps) {
   return (
@@ -42,7 +47,7 @@ export default function BrandFilter({ brands, selectedBrand, onSelectBrand, sele
 
             {selectedBrand === brand.name && onSelectTipo && (
               <div className="pl-4 space-y-1">
-                {tipos.map((tipo) => (
+                {getTiposForBrand(brand.name).map((tipo) => (
                   <button
                     key={tipo}
                     onClick={() => onSelectTipo(tipo)}

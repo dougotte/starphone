@@ -28,6 +28,8 @@ type Banner = {
   subtitle: string;
   location_info: string;
   background_image_url?: string;
+  disable_out_of_stock?: boolean;
+  disable_zero_price?: boolean;
 };
 
 type Order = {
@@ -131,6 +133,8 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
   const [productSearch, setProductSearch] = useState('');
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [disableOutOfStock, setDisableOutOfStock] = useState(false);
+  const [disableZeroPrice, setDisableZeroPrice] = useState(false);
 
   const valorFinal = (productForm.valor_compra || 0) + (productForm.lucro || 0);
 
@@ -183,6 +187,8 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
         location_info: data.location_info,
         background_image_url: data.background_image_url || ''
       });
+      setDisableOutOfStock(data.disable_out_of_stock ?? false);
+      setDisableZeroPrice(data.disable_zero_price ?? false);
     }
   };
 
@@ -379,6 +385,19 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
       setMessage('Erro ao enviar imagem: ' + (error as any).message);
     } finally {
       setUploadingImage(false);
+    }
+  };
+
+  const handleShopSettingToggle = async (field: 'disable_out_of_stock' | 'disable_zero_price', value: boolean) => {
+    const bannerId = banners[0]?.id;
+    if (!bannerId) return;
+    const { error } = await supabase
+      .from('banner_settings')
+      .update({ [field]: value, updated_at: new Date().toISOString() })
+      .eq('id', bannerId);
+    if (!error) {
+      if (field === 'disable_out_of_stock') setDisableOutOfStock(value);
+      else setDisableZeroPrice(value);
     }
   };
 
@@ -719,6 +738,9 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                         <option value="DOCK DE CARGA">DOCK DE CARGA</option>
                         <option value="TAMPA TRASEIRA">TAMPA TRASEIRA</option>
                         <option value="PERIFÉRICOS">PERIFÉRICOS</option>
+                        {productForm.brand === 'iPhone' && (
+                          <option value="CÂMERA">CÂMERA</option>
+                        )}
                       </select>
                     </div>
                     <div>
@@ -823,15 +845,55 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                   </div>
                 </form>
 
-                <div className="mb-4 relative">
-                  <input
-                    type="text"
-                    placeholder="Buscar produto por nome, marca ou tipo..."
-                    value={productSearch}
-                    onChange={(e) => setProductSearch(e.target.value)}
-                    className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:outline-none bg-white"
-                  />
-                  <Search className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                <div className="mb-4 space-y-3">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                      <span className="text-sm font-medium text-gray-700 flex-1 pr-4">
+                        Você deseja desabilitar a compra dos produtos sem estoque?
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleShopSettingToggle('disable_out_of_stock', !disableOutOfStock)}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                          disableOutOfStock ? 'bg-[#00ff00]' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition duration-200 ${
+                            disableOutOfStock ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                      <span className="text-sm font-medium text-gray-700 flex-1 pr-4">
+                        Você deseja desabilitar a compra dos produtos com o preço zerado?
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleShopSettingToggle('disable_zero_price', !disableZeroPrice)}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                          disableZeroPrice ? 'bg-[#00ff00]' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition duration-200 ${
+                            disableZeroPrice ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Buscar produto por nome, marca ou tipo..."
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:outline-none bg-white"
+                    />
+                    <Search className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4">

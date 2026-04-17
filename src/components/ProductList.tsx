@@ -22,9 +22,11 @@ type ProductListProps = {
   products: Product[];
   onAddToCart: (product: Product, quantity: number) => void;
   loading?: boolean;
+  disableOutOfStock?: boolean;
+  disableZeroPrice?: boolean;
 };
 
-export default function ProductList({ products, onAddToCart, loading }: ProductListProps) {
+export default function ProductList({ products, onAddToCart, loading, disableOutOfStock, disableZeroPrice }: ProductListProps) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
 
   const getQuantity = (productId: string) => quantities[productId] || 1;
@@ -34,7 +36,15 @@ export default function ProductList({ products, onAddToCart, loading }: ProductL
     setQuantities({ ...quantities, [productId]: newQuantity });
   };
 
+  const isUnavailable = (product: Product): boolean => {
+    const stockVal = product.estoque ?? product.stock ?? (product.in_stock === false ? 0 : 1);
+    if (disableOutOfStock && stockVal === 0) return true;
+    if (disableZeroPrice && product.price === 0) return true;
+    return false;
+  };
+
   const handleAddToCart = (product: Product) => {
+    if (isUnavailable(product)) return;
     const quantity = getQuantity(product.id);
     onAddToCart(product, quantity);
     setQuantities({ ...quantities, [product.id]: 1 });
@@ -106,28 +116,35 @@ export default function ProductList({ products, onAddToCart, loading }: ProductL
 
               <div className="col-span-3">
                 <div className="flex flex-col items-center gap-2">
-                  <div className="flex items-center border border-gray-300 rounded-lg">
-                    <button
-                      onClick={() => updateQuantity(product.id, getQuantity(product.id) - 1)}
-                      className="px-2 py-1 hover:bg-gray-100 transition"
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <span className="px-3 py-1 min-w-[2.5rem] text-center font-medium border-x border-gray-300 text-sm">
-                      {getQuantity(product.id)}
-                    </span>
-                    <button
-                      onClick={() => updateQuantity(product.id, getQuantity(product.id) + 1)}
-                      className="px-2 py-1 hover:bg-gray-100 transition"
-                    >
-                      <Plus size={14} />
-                    </button>
-                  </div>
+                  {!isUnavailable(product) && (
+                    <div className="flex items-center border border-gray-300 rounded-lg">
+                      <button
+                        onClick={() => updateQuantity(product.id, getQuantity(product.id) - 1)}
+                        className="px-2 py-1 hover:bg-gray-100 transition"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="px-3 py-1 min-w-[2.5rem] text-center font-medium border-x border-gray-300 text-sm">
+                        {getQuantity(product.id)}
+                      </span>
+                      <button
+                        onClick={() => updateQuantity(product.id, getQuantity(product.id) + 1)}
+                        className="px-2 py-1 hover:bg-gray-100 transition"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  )}
                   <button
                     onClick={() => handleAddToCart(product)}
-                    className="bg-[#00ff00] text-black px-4 py-1.5 rounded-lg font-semibold hover:bg-[#00dd00] transition text-sm w-full"
+                    disabled={isUnavailable(product)}
+                    className={`px-4 py-1.5 rounded-lg font-semibold transition text-sm w-full ${
+                      isUnavailable(product)
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-[#00ff00] text-black hover:bg-[#00dd00]'
+                    }`}
                   >
-                    + Adicionar
+                    {isUnavailable(product) ? 'Indisponível' : '+ Adicionar'}
                   </button>
                 </div>
               </div>
@@ -151,28 +168,35 @@ export default function ProductList({ products, onAddToCart, loading }: ProductL
                 </p>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <div className="flex items-center border border-gray-300 rounded-lg">
-                  <button
-                    onClick={() => updateQuantity(product.id, getQuantity(product.id) - 1)}
-                    className="px-2 py-1 hover:bg-gray-100 transition"
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span className="px-2 py-1 min-w-[2rem] text-center font-medium border-x border-gray-300 text-sm">
-                    {getQuantity(product.id)}
-                  </span>
-                  <button
-                    onClick={() => updateQuantity(product.id, getQuantity(product.id) + 1)}
-                    className="px-2 py-1 hover:bg-gray-100 transition"
-                  >
-                    <Plus size={14} />
-                  </button>
-                </div>
+                {!isUnavailable(product) && (
+                  <div className="flex items-center border border-gray-300 rounded-lg">
+                    <button
+                      onClick={() => updateQuantity(product.id, getQuantity(product.id) - 1)}
+                      className="px-2 py-1 hover:bg-gray-100 transition"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="px-2 py-1 min-w-[2rem] text-center font-medium border-x border-gray-300 text-sm">
+                      {getQuantity(product.id)}
+                    </span>
+                    <button
+                      onClick={() => updateQuantity(product.id, getQuantity(product.id) + 1)}
+                      className="px-2 py-1 hover:bg-gray-100 transition"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                )}
                 <button
                   onClick={() => handleAddToCart(product)}
-                  className="bg-[#00ff00] text-black px-3 py-1.5 rounded-lg font-semibold hover:bg-[#00dd00] transition text-xs whitespace-nowrap"
+                  disabled={isUnavailable(product)}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition text-xs whitespace-nowrap ${
+                    isUnavailable(product)
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-[#00ff00] text-black hover:bg-[#00dd00]'
+                  }`}
                 >
-                  Adicionar
+                  {isUnavailable(product) ? 'Indisponível' : 'Adicionar'}
                 </button>
               </div>
             </div>
