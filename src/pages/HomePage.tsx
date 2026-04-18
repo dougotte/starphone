@@ -343,7 +343,7 @@ export default function HomePage({
           </aside>
 
           <section className="lg:col-span-6">
-            <div className="mb-6 lg:hidden space-y-3">
+            <div className="mb-6 lg:hidden space-y-3 pt-4">
               <div className="space-y-2">
                 <div className="flex gap-2">
                   {brands.filter(b => b.name === 'iPhone' || b.name === 'Samsung').map((brand) => (

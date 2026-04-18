@@ -749,9 +749,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                         <option value="DOCK DE CARGA">DOCK DE CARGA</option>
                         <option value="TAMPA TRASEIRA">TAMPA TRASEIRA</option>
                         <option value="PERIFÉRICOS">PERIFÉRICOS</option>
-                        {productForm.brand === 'iPhone' && (
-                          <option value="CÂMERA">CÂMERA</option>
-                        )}
+                        <option value="CÂMERA">CÂMERA</option>
                       </select>
                     </div>
                     <div>
