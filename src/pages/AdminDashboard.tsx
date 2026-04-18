@@ -327,8 +327,6 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     }
 
     const filtered = getFilteredProducts();
-    const allProducts = [...products];
-
     const draggingIndex = filtered.findIndex(p => p.id === draggingId);
     const targetIndex = filtered.findIndex(p => p.id === targetId);
 
@@ -338,28 +336,25 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     const [removed] = reorderedFiltered.splice(draggingIndex, 1);
     reorderedFiltered.splice(targetIndex, 0, removed);
 
-    const filteredPositions = filtered
-      .map(p => p.order_position ?? 0)
-      .sort((a, b) => a - b);
+    const positionMap = new Map<string, number>();
+    filtered.forEach((p, i) => {
+      positionMap.set(reorderedFiltered[i].id!, p.order_position ?? i + 1);
+    });
 
-    const updates: { id: string; order_position: number }[] = reorderedFiltered.map((p, idx) => ({
-      id: p.id!,
-      order_position: filteredPositions[idx],
-    }));
+    const updates = Array.from(positionMap.entries()).map(([id, order_position]) => ({ id, order_position }));
 
-    const updatedProducts = allProducts.map(p => {
-      const update = updates.find(u => u.id === p.id);
-      return update ? { ...p, order_position: update.order_position } : p;
+    const updatedProducts = [...products].map(p => {
+      const pos = positionMap.get(p.id!);
+      return pos !== undefined ? { ...p, order_position: pos } : p;
     });
 
     setProducts(updatedProducts.sort((a, b) => (a.order_position ?? 0) - (b.order_position ?? 0)));
 
-    for (const update of updates) {
-      await supabase
-        .from('products')
-        .update({ order_position: update.order_position })
-        .eq('id', update.id);
-    }
+    await Promise.all(
+      updates.map(({ id, order_position }) =>
+        supabase.from('products').update({ order_position }).eq('id', id)
+      )
+    );
 
     setDraggingId(null);
     setDragOverId(null);

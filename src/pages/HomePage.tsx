@@ -21,6 +21,10 @@ type Product = {
   storage: string;
   color: string;
   in_stock: boolean;
+  tipo?: string;
+  stock?: number;
+  estoque?: number;
+  order_position?: number;
 };
 
 type CartItem = Product & { quantity: number };
