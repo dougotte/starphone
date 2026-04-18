@@ -334,13 +334,17 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
 
     if (draggingIndex === -1 || targetIndex === -1) return;
 
-    const reordered = [...filtered];
-    const [removed] = reordered.splice(draggingIndex, 1);
-    reordered.splice(targetIndex, 0, removed);
+    const reorderedFiltered = [...filtered];
+    const [removed] = reorderedFiltered.splice(draggingIndex, 1);
+    reorderedFiltered.splice(targetIndex, 0, removed);
 
-    const updates = reordered.map((p, idx) => ({
+    const filteredPositions = filtered
+      .map(p => p.order_position ?? 0)
+      .sort((a, b) => a - b);
+
+    const updates: { id: string; order_position: number }[] = reorderedFiltered.map((p, idx) => ({
       id: p.id!,
-      order_position: idx + 1,
+      order_position: filteredPositions[idx],
     }));
 
     const updatedProducts = allProducts.map(p => {
@@ -348,7 +352,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
       return update ? { ...p, order_position: update.order_position } : p;
     });
 
-    setProducts(updatedProducts.sort((a, b) => (a.order_position || 0) - (b.order_position || 0)));
+    setProducts(updatedProducts.sort((a, b) => (a.order_position ?? 0) - (b.order_position ?? 0)));
 
     for (const update of updates) {
       await supabase
