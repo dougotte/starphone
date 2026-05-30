@@ -12,7 +12,7 @@ type BrandFilterProps = {
   onSelectTipo?: (tipo: string | null) => void;
 };
 
-const tiposBase = ['TELA', 'BATERIA', 'DOCK DE CARGA', 'TAMPA TRASEIRA', 'PERIFÉRICOS', 'CÂMERA'];
+const tiposBase = ['TELA', 'BATERIA', 'DOCK DE CARGA', 'TAMPA TRASEIRA', 'PERIFÉRICOS', 'CÂMERA', 'LENTE DE CÂMERA'];
 
 export function getTiposForBrand(_brand: string | null): string[] {
   return tiposBase;

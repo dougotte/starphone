@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, LogOut, Plus, Trash2, Users, Image, Tag, Package, ShoppingBag, Check, X, Printer, MapPin, Upload, GripVertical, Search } from 'lucide-react';
+import { ArrowLeft, LogOut, Trash2, Users, Image, Tag, Package, ShoppingBag, Check, X, Printer, MapPin, GripVertical, Search, ChevronDown, ChevronRight, DollarSign } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -135,6 +135,14 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [disableOutOfStock, setDisableOutOfStock] = useState(false);
   const [disableZeroPrice, setDisableZeroPrice] = useState(false);
+
+  const [productViewMode, setProductViewMode] = useState<'flat' | 'grouped'>('flat');
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  const [bulkAdjustTipo, setBulkAdjustTipo] = useState('');
+  const [bulkAdjustValue, setBulkAdjustValue] = useState('');
+  const [bulkAdjustMode, setBulkAdjustMode] = useState<'increase' | 'decrease'>('increase');
+  const [bulkAdjustLoading, setBulkAdjustLoading] = useState(false);
 
   const valorFinal = (productForm.valor_compra || 0) + (productForm.lucro || 0);
 
@@ -294,6 +302,61 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     setProductForm({ ...product });
     setEditingProduct(product.id!);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBulkPriceAdjust = async () => {
+    if (!bulkAdjustTipo || !bulkAdjustValue) return;
+    const delta = parseFloat(bulkAdjustValue);
+    if (isNaN(delta) || delta <= 0) {
+      setMessage('Informe um valor válido maior que zero.');
+      return;
+    }
+    const affected = products.filter(p => p.tipo === bulkAdjustTipo);
+    if (affected.length === 0) {
+      setMessage(`Nenhum produto encontrado com o tipo "${bulkAdjustTipo}".`);
+      return;
+    }
+    if (!confirm(`Isso irá ${bulkAdjustMode === 'increase' ? 'aumentar' : 'diminuir'} R$ ${delta.toFixed(2)} em ${affected.length} produto(s) do tipo "${bulkAdjustTipo}". Confirmar?`)) return;
+
+    setBulkAdjustLoading(true);
+    setMessage('');
+    try {
+      await Promise.all(
+        affected.map(p => {
+          const newPrice = Math.max(0, (p.price ?? 0) + (bulkAdjustMode === 'increase' ? delta : -delta));
+          return supabase.from('products').update({ price: newPrice }).eq('id', p.id!);
+        })
+      );
+      setMessage(`Preço ajustado em ${affected.length} produto(s) do tipo "${bulkAdjustTipo}"!`);
+      setBulkAdjustValue('');
+      await loadProducts();
+    } catch {
+      setMessage('Erro ao ajustar preços.');
+    } finally {
+      setBulkAdjustLoading(false);
+    }
+  };
+
+  const toggleGroup = (key: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const getGroupedProducts = () => {
+    const filtered = getFilteredProducts();
+    const groups: Record<string, Record<string, Product[]>> = {};
+    for (const p of filtered) {
+      const brand = p.brand || 'Sem Marca';
+      const tipo = p.tipo || 'Sem Tipo';
+      if (!groups[brand]) groups[brand] = {};
+      if (!groups[brand][tipo]) groups[brand][tipo] = [];
+      groups[brand][tipo].push(p);
+    }
+    return groups;
   };
 
   const getFilteredProducts = () => {
@@ -745,6 +808,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                         <option value="TAMPA TRASEIRA">TAMPA TRASEIRA</option>
                         <option value="PERIFÉRICOS">PERIFÉRICOS</option>
                         <option value="CÂMERA">CÂMERA</option>
+                        <option value="LENTE DE CÂMERA">LENTE DE CÂMERA</option>
                       </select>
                     </div>
                     <div>
@@ -900,6 +964,78 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                   </div>
                 </div>
 
+                {/* Bulk price adjustment */}
+                <div className="mb-6 border border-gray-200 rounded-xl p-4 bg-gray-50">
+                  <h3 className="text-base font-bold mb-3 flex items-center gap-2">
+                    <DollarSign size={18} className="text-[#00ff00]" />
+                    Ajuste de Preço em Massa por Tipo
+                  </h3>
+                  <div className="flex flex-wrap gap-3 items-end">
+                    <div className="flex-1 min-w-[160px]">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
+                      <select
+                        value={bulkAdjustTipo}
+                        onChange={(e) => setBulkAdjustTipo(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00ff00] focus:outline-none"
+                      >
+                        <option value="">Selecione um tipo</option>
+                        <option value="TELA">TELA</option>
+                        <option value="BATERIA">BATERIA</option>
+                        <option value="DOCK DE CARGA">DOCK DE CARGA</option>
+                        <option value="TAMPA TRASEIRA">TAMPA TRASEIRA</option>
+                        <option value="PERIFÉRICOS">PERIFÉRICOS</option>
+                        <option value="CÂMERA">CÂMERA</option>
+                        <option value="LENTE DE CÂMERA">LENTE DE CÂMERA</option>
+                      </select>
+                    </div>
+                    <div className="flex-1 min-w-[140px]">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Operação</label>
+                      <div className="flex rounded-lg overflow-hidden border border-gray-300">
+                        <button
+                          type="button"
+                          onClick={() => setBulkAdjustMode('increase')}
+                          className={`flex-1 py-2 text-sm font-semibold transition ${bulkAdjustMode === 'increase' ? 'bg-green-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                        >
+                          + Aumentar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBulkAdjustMode('decrease')}
+                          className={`flex-1 py-2 text-sm font-semibold transition ${bulkAdjustMode === 'decrease' ? 'bg-red-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                        >
+                          − Diminuir
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-[120px]">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Valor (R$)</label>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        value={bulkAdjustValue}
+                        onChange={(e) => setBulkAdjustValue(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00ff00] focus:outline-none"
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleBulkPriceAdjust}
+                      disabled={bulkAdjustLoading || !bulkAdjustTipo || !bulkAdjustValue}
+                      className="px-4 py-2 bg-black text-[#00ff00] rounded-lg text-sm font-semibold hover:bg-gray-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {bulkAdjustLoading ? 'Ajustando...' : 'Aplicar'}
+                    </button>
+                  </div>
+                  {bulkAdjustTipo && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      {products.filter(p => p.tipo === bulkAdjustTipo).length} produto(s) serão afetados
+                    </p>
+                  )}
+                </div>
+
+                {/* Header: brand filter + view toggle + select actions */}
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                   <div className="flex items-center gap-3 flex-wrap">
                     <h3 className="text-xl font-bold">Produtos Cadastrados ({filteredProducts.length}/{products.length})</h3>
@@ -929,7 +1065,21 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex rounded-lg overflow-hidden border border-gray-200">
+                      <button
+                        onClick={() => setProductViewMode('flat')}
+                        className={`px-3 py-1.5 text-sm font-medium transition ${productViewMode === 'flat' ? 'bg-black text-[#00ff00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                      >
+                        Lista
+                      </button>
+                      <button
+                        onClick={() => setProductViewMode('grouped')}
+                        className={`px-3 py-1.5 text-sm font-medium transition ${productViewMode === 'grouped' ? 'bg-black text-[#00ff00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                      >
+                        Por Tipo
+                      </button>
+                    </div>
                     <label className="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700">
                       <input
                         type="checkbox"
@@ -951,64 +1101,148 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                   </div>
                 </div>
 
-                <p className="text-xs text-gray-500 mb-3 flex items-center gap-1">
-                  <GripVertical size={14} />
-                  Arraste os produtos para reordenar. A ordem aqui é a mesma exibida na home.
-                </p>
-
-                <div className="space-y-2">
-                  {filteredProducts.map((product) => (
-                    <div
-                      key={product.id}
-                      draggable
-                      onDragStart={() => handleDragStart(product.id!)}
-                      onDragOver={(e) => handleDragOver(e, product.id!)}
-                      onDrop={() => handleDrop(product.id!)}
-                      onDragEnd={() => { setDraggingId(null); setDragOverId(null); }}
-                      className={`flex items-center gap-3 border p-4 rounded-lg transition cursor-grab active:cursor-grabbing select-none ${
-                        draggingId === product.id ? 'opacity-50 border-[#00ff00]' :
-                        dragOverId === product.id ? 'border-[#00ff00] bg-green-50' :
-                        selectedProducts.has(product.id!) ? 'border-red-400 bg-red-50' :
-                        'hover:bg-gray-50'
-                      }`}
-                    >
-                      <GripVertical size={18} className="text-gray-400 shrink-0" />
-                      <input
-                        type="checkbox"
-                        checked={selectedProducts.has(product.id!)}
-                        onChange={() => handleToggleSelectProduct(product.id!)}
-                        className="w-4 h-4 shrink-0 accent-[#00ff00]"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold truncate">{product.name}</h4>
-                        <p className="text-sm text-gray-600">
-                          {product.brand}
-                          {product.tipo ? ` • ${product.tipo}` : ''}
-                          {' • '}
-                          <span className={product.price === 0 ? 'text-red-600 font-semibold' : ''}>
-                            R$ {product.price.toFixed(2)}
-                          </span>
-                          {` • Estoque: ${product.estoque ?? product.stock}`}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={() => handleEditProduct(product)}
-                          className="text-blue-600 hover:text-blue-800 font-medium text-sm px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 transition"
+                {productViewMode === 'flat' && (
+                  <>
+                    <p className="text-xs text-gray-500 mb-3 flex items-center gap-1">
+                      <GripVertical size={14} />
+                      Arraste os produtos para reordenar. A ordem aqui é a mesma exibida na home.
+                    </p>
+                    <div className="space-y-2">
+                      {filteredProducts.map((product) => (
+                        <div
+                          key={product.id}
+                          draggable
+                          onDragStart={() => handleDragStart(product.id!)}
+                          onDragOver={(e) => handleDragOver(e, product.id!)}
+                          onDrop={() => handleDrop(product.id!)}
+                          onDragEnd={() => { setDraggingId(null); setDragOverId(null); }}
+                          className={`flex items-center gap-3 border p-4 rounded-lg transition cursor-grab active:cursor-grabbing select-none ${
+                            draggingId === product.id ? 'opacity-50 border-[#00ff00]' :
+                            dragOverId === product.id ? 'border-[#00ff00] bg-green-50' :
+                            selectedProducts.has(product.id!) ? 'border-red-400 bg-red-50' :
+                            'hover:bg-gray-50'
+                          }`}
                         >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProduct(product.id!)}
-                          className="text-red-600 hover:text-red-800 transition"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
+                          <GripVertical size={18} className="text-gray-400 shrink-0" />
+                          <input
+                            type="checkbox"
+                            checked={selectedProducts.has(product.id!)}
+                            onChange={() => handleToggleSelectProduct(product.id!)}
+                            className="w-4 h-4 shrink-0 accent-[#00ff00]"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold truncate">{product.name}</h4>
+                            <p className="text-sm text-gray-600">
+                              {product.brand}
+                              {product.tipo ? ` • ${product.tipo}` : ''}
+                              {' • '}
+                              <span className={product.price === 0 ? 'text-red-600 font-semibold' : ''}>
+                                R$ {product.price.toFixed(2)}
+                              </span>
+                              {` • Estoque: ${product.estoque ?? product.stock}`}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => handleEditProduct(product)}
+                              className="text-blue-600 hover:text-blue-800 font-medium text-sm px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 transition"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProduct(product.id!)}
+                              className="text-red-600 hover:text-red-800 transition"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </>
+                )}
+
+                {productViewMode === 'grouped' && (() => {
+                  const grouped = getGroupedProducts();
+                  return (
+                    <div className="space-y-4">
+                      {Object.entries(grouped).map(([brand, tipos]) => (
+                        <div key={brand} className="border border-gray-200 rounded-xl overflow-hidden">
+                          <div className="bg-gray-800 text-white px-4 py-3 font-bold text-base flex items-center gap-2">
+                            {categories.find(c => c.name === brand)?.icon || '📱'}
+                            {brand}
+                            <span className="ml-auto text-xs font-normal text-gray-300">
+                              {Object.values(tipos).flat().length} produto(s)
+                            </span>
+                          </div>
+                          <div className="divide-y divide-gray-100">
+                            {Object.entries(tipos).map(([tipo, prods]) => {
+                              const groupKey = `${brand}__${tipo}`;
+                              const isCollapsed = collapsedGroups.has(groupKey);
+                              return (
+                                <div key={tipo}>
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleGroup(groupKey)}
+                                    className="w-full flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition text-left"
+                                  >
+                                    {isCollapsed ? <ChevronRight size={16} className="text-gray-500 shrink-0" /> : <ChevronDown size={16} className="text-gray-500 shrink-0" />}
+                                    <span className="font-semibold text-sm text-gray-700">{tipo}</span>
+                                    <span className="ml-auto text-xs text-gray-500 bg-gray-200 rounded-full px-2 py-0.5">{prods.length}</span>
+                                  </button>
+                                  {!isCollapsed && (
+                                    <div className="divide-y divide-gray-50">
+                                      {prods.map(product => (
+                                        <div
+                                          key={product.id}
+                                          className={`flex items-center gap-3 px-4 py-3 transition ${
+                                            selectedProducts.has(product.id!) ? 'bg-red-50' : 'hover:bg-gray-50'
+                                          }`}
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={selectedProducts.has(product.id!)}
+                                            onChange={() => handleToggleSelectProduct(product.id!)}
+                                            className="w-4 h-4 shrink-0 accent-[#00ff00]"
+                                          />
+                                          <div className="flex-1 min-w-0">
+                                            <h4 className="font-semibold text-sm truncate">{product.name}</h4>
+                                            <p className="text-xs text-gray-500">
+                                              <span className={product.price === 0 ? 'text-red-600 font-semibold' : ''}>
+                                                R$ {product.price.toFixed(2)}
+                                              </span>
+                                              {` • Estoque: ${product.estoque ?? product.stock}`}
+                                              {product.segunda_opcao ? ` • ${product.segunda_opcao}` : ''}
+                                            </p>
+                                          </div>
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            <button
+                                              onClick={() => handleEditProduct(product)}
+                                              className="text-blue-600 hover:text-blue-800 font-medium text-xs px-2.5 py-1 rounded border border-blue-200 hover:bg-blue-50 transition"
+                                            >
+                                              Editar
+                                            </button>
+                                            <button
+                                              onClick={() => handleDeleteProduct(product.id!)}
+                                              className="text-red-500 hover:text-red-700 transition"
+                                            >
+                                              <Trash2 size={16} />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
