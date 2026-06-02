@@ -1207,7 +1207,12 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                                             className="w-4 h-4 shrink-0 accent-[#00ff00]"
                                           />
                                           <div className="flex-1 min-w-0">
-                                            <h4 className="font-semibold text-sm truncate">{product.name}</h4>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <h4 className="font-semibold text-sm truncate">{product.name}</h4>
+                                              {product.tipo && (
+                                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium shrink-0">{product.tipo}</span>
+                                              )}
+                                            </div>
                                             <p className="text-xs text-gray-500">
                                               <span className={product.price === 0 ? 'text-red-600 font-semibold' : ''}>
                                                 R$ {product.price.toFixed(2)}

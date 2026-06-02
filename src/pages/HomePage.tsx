@@ -159,7 +159,8 @@ export default function HomePage({
       filtered = filtered.filter(p =>
         p.name.toLowerCase().includes(query) ||
         p.brand.toLowerCase().includes(query) ||
-        (p.model && p.model.toLowerCase().includes(query))
+        (p.model && p.model.toLowerCase().includes(query)) ||
+        (p.tipo && p.tipo.toLowerCase().includes(query))
       );
     }
 
