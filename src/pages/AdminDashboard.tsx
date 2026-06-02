@@ -423,6 +423,46 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     setDragOverId(null);
   };
 
+  const handleDropInGroup = async (targetId: string, groupProducts: Product[]) => {
+    if (!draggingId || draggingId === targetId) {
+      setDraggingId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const draggingIndex = groupProducts.findIndex(p => p.id === draggingId);
+    const targetIndex = groupProducts.findIndex(p => p.id === targetId);
+
+    if (draggingIndex === -1 || targetIndex === -1) return;
+
+    const reordered = [...groupProducts];
+    const [removed] = reordered.splice(draggingIndex, 1);
+    reordered.splice(targetIndex, 0, removed);
+
+    const positionMap = new Map<string, number>();
+    groupProducts.forEach((p, i) => {
+      positionMap.set(reordered[i].id!, p.order_position ?? i + 1);
+    });
+
+    const updates = Array.from(positionMap.entries()).map(([id, order_position]) => ({ id, order_position }));
+
+    const updatedProducts = [...products].map(p => {
+      const pos = positionMap.get(p.id!);
+      return pos !== undefined ? { ...p, order_position: pos } : p;
+    });
+
+    setProducts(updatedProducts.sort((a, b) => (a.order_position ?? 0) - (b.order_position ?? 0)));
+
+    await Promise.all(
+      updates.map(({ id, order_position }) =>
+        supabase.from('products').update({ order_position }).eq('id', id)
+      )
+    );
+
+    setDraggingId(null);
+    setDragOverId(null);
+  };
+
   const handleImageUpload = async (file: File) => {
     setUploadingImage(true);
     setMessage('');
@@ -1193,13 +1233,25 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                                   </button>
                                   {!isCollapsed && (
                                     <div className="divide-y divide-gray-50">
+                                      <p className="text-xs text-gray-400 px-4 py-2 flex items-center gap-1 bg-white">
+                                        <GripVertical size={12} />
+                                        Arraste para reordenar dentro do tipo
+                                      </p>
                                       {prods.map(product => (
                                         <div
                                           key={product.id}
-                                          className={`flex items-center gap-3 px-4 py-3 transition ${
+                                          draggable
+                                          onDragStart={() => handleDragStart(product.id!)}
+                                          onDragOver={(e) => handleDragOver(e, product.id!)}
+                                          onDrop={() => handleDropInGroup(product.id!, prods)}
+                                          onDragEnd={() => { setDraggingId(null); setDragOverId(null); }}
+                                          className={`flex items-center gap-3 px-4 py-3 transition cursor-grab active:cursor-grabbing select-none ${
+                                            draggingId === product.id ? 'opacity-50 border border-[#00ff00] rounded' :
+                                            dragOverId === product.id ? 'border border-[#00ff00] bg-green-50 rounded' :
                                             selectedProducts.has(product.id!) ? 'bg-red-50' : 'hover:bg-gray-50'
                                           }`}
                                         >
+                                          <GripVertical size={16} className="text-gray-400 shrink-0" />
                                           <input
                                             type="checkbox"
                                             checked={selectedProducts.has(product.id!)}
