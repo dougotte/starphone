@@ -131,6 +131,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
 
   const [productBrandFilter, setProductBrandFilter] = useState<string>('all');
   const [productSearch, setProductSearch] = useState('');
+  const [productQuickFilter, setProductQuickFilter] = useState<'all' | 'zero_price' | 'zero_stock'>('all');
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [disableOutOfStock, setDisableOutOfStock] = useState(false);
@@ -369,6 +370,11 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
         (p.tipo || '').toLowerCase().includes(q) ||
         (p.segunda_opcao || '').toLowerCase().includes(q)
       );
+    }
+    if (productQuickFilter === 'zero_price') {
+      filtered = filtered.filter(p => p.price === 0);
+    } else if (productQuickFilter === 'zero_stock') {
+      filtered = filtered.filter(p => (p.estoque ?? p.stock) === 0);
     }
     return filtered;
   };
@@ -1104,6 +1110,49 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                         </button>
                       ))}
                     </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-gray-500 font-medium">Filtros rápidos:</span>
+                    <button
+                      onClick={() => setProductQuickFilter('all')}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                        productQuickFilter === 'all'
+                          ? 'bg-gray-800 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Todos
+                    </button>
+                    <button
+                      onClick={() => setProductQuickFilter('zero_price')}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
+                        productQuickFilter === 'zero_price'
+                          ? 'bg-red-600 text-white'
+                          : 'bg-red-50 text-red-700 hover:bg-red-100'
+                      }`}
+                    >
+                      Preco R$0,00
+                      {productQuickFilter !== 'zero_price' && (
+                        <span className="bg-red-200 text-red-800 text-xs px-1.5 py-0.5 rounded-full font-bold">
+                          {products.filter(p => p.price === 0).length}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setProductQuickFilter('zero_stock')}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
+                        productQuickFilter === 'zero_stock'
+                          ? 'bg-orange-600 text-white'
+                          : 'bg-orange-50 text-orange-700 hover:bg-orange-100'
+                      }`}
+                    >
+                      Estoque zerado
+                      {productQuickFilter !== 'zero_stock' && (
+                        <span className="bg-orange-200 text-orange-800 text-xs px-1.5 py-0.5 rounded-full font-bold">
+                          {products.filter(p => (p.estoque ?? p.stock) === 0).length}
+                        </span>
+                      )}
+                    </button>
                   </div>
                   <div className="flex items-center gap-3 flex-wrap">
                     <div className="flex rounded-lg overflow-hidden border border-gray-200">
