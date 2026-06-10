@@ -241,6 +241,13 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
         if (error) throw error;
         setMessage('Produto atualizado!');
       } else {
+        const nameExists = products.some(
+          p => p.name.trim().toLowerCase() === productForm.name.trim().toLowerCase()
+        );
+        if (nameExists) {
+          setMessage('Este produto já está cadastrado!');
+          return;
+        }
         const maxPos = products.length > 0
           ? Math.max(...products.map(p => p.order_position || 0)) + 1
           : 1;

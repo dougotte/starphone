@@ -27,8 +27,13 @@ export default function BrandFilter({ brands, selectedBrand, onSelectBrand, sele
           <div key={brand.name} className="space-y-2">
             <button
               onClick={() => {
-                onSelectBrand(brand.name);
-                onSelectTipo?.(null);
+                if (selectedBrand === brand.name) {
+                  onSelectBrand(null);
+                  onSelectTipo?.(null);
+                } else {
+                  onSelectBrand(brand.name);
+                  onSelectTipo?.(null);
+                }
               }}
               className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition ${
                 selectedBrand === brand.name

@@ -335,7 +335,12 @@ export default function HomePage({
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 pb-24 lg:pb-8">
+      <main className="max-w-7xl mx-auto px-4 pb-24 lg:pb-8" onClick={(e) => {
+        if ((e.target as HTMLElement).closest('button, a, input') === null) {
+          setSelectedBrand(null);
+          setSelectedTipo(null);
+        }
+      }}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <aside className="lg:col-span-3 hidden lg:block">
             <BrandFilter
@@ -355,8 +360,13 @@ export default function HomePage({
                     <button
                       key={brand.name}
                       onClick={() => {
-                        setSelectedBrand(brand.name);
-                        setSelectedTipo(null);
+                        if (selectedBrand === brand.name) {
+                          setSelectedBrand(null);
+                          setSelectedTipo(null);
+                        } else {
+                          setSelectedBrand(brand.name);
+                          setSelectedTipo(null);
+                        }
                       }}
                       className={`flex-1 px-3 py-2 rounded-lg font-semibold transition text-sm ${
                         selectedBrand === brand.name ? 'ring-2 ring-[#00ff00]' : ''
@@ -376,8 +386,13 @@ export default function HomePage({
                     <button
                       key={brand.name}
                       onClick={() => {
-                        setSelectedBrand(brand.name);
-                        setSelectedTipo(null);
+                        if (selectedBrand === brand.name) {
+                          setSelectedBrand(null);
+                          setSelectedTipo(null);
+                        } else {
+                          setSelectedBrand(brand.name);
+                          setSelectedTipo(null);
+                        }
                       }}
                       className={`flex-1 min-w-[30%] px-3 py-2 rounded-lg font-semibold transition text-sm ${
                         selectedBrand === brand.name ? 'ring-2 ring-[#00ff00]' : ''
