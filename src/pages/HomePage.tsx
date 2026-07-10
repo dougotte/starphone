@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart as CartIcon, Menu, X, Instagram, MessageCircle, Search, User, LogOut, MapPin } from 'lucide-react';
+import { ShoppingCart as CartIcon, Menu, X, Instagram, MessageCircle, Search, User, LogOut, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import BrandFilter, { getTiposForBrand } from '../components/BrandFilter';
@@ -54,6 +54,8 @@ export default function HomePage({
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [productPage, setProductPage] = useState(0);
+  const PRODUCTS_PER_PAGE = 50;
   const [bannerSettings, setBannerSettings] = useState({
     title: 'PEÇAS & ACESSÓRIOS',
     subtitle: 'Hardware de qualidade para o seu celular',
@@ -91,6 +93,7 @@ export default function HomePage({
 
   useEffect(() => {
     filterProducts();
+    setProductPage(0);
   }, [selectedBrand, selectedTipo, searchQuery, products]);
 
   const loadBrands = async () => {
@@ -114,7 +117,8 @@ export default function HomePage({
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .order('order_position', { ascending: true });
+      .order('order_position', { ascending: true })
+      .range(0, 9999);
 
     if (error) {
       console.error('Error loading products:', error);
@@ -457,15 +461,50 @@ export default function HomePage({
                   className="w-full max-w-md rounded-2xl shadow-lg"
                 />
               </div>
-            ) : (
-              <ProductList
-                products={filteredProducts}
-                onAddToCart={addToCart}
-                loading={loading}
-                disableOutOfStock={bannerSettings.disable_out_of_stock}
-                disableZeroPrice={bannerSettings.disable_zero_price}
-              />
-            )}
+            ) : (() => {
+              const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+              const paginated = filteredProducts.slice(productPage * PRODUCTS_PER_PAGE, (productPage + 1) * PRODUCTS_PER_PAGE);
+              return (
+                <>
+                  <ProductList
+                    products={paginated}
+                    onAddToCart={addToCart}
+                    loading={loading}
+                    disableOutOfStock={bannerSettings.disable_out_of_stock}
+                    disableZeroPrice={bannerSettings.disable_zero_price}
+                  />
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-6 pb-2">
+                      <button
+                        onClick={() => setProductPage(p => Math.max(0, p - 1))}
+                        disabled={productPage === 0}
+                        className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setProductPage(i)}
+                          className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
+                            productPage === i ? 'bg-[#00ff00] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setProductPage(p => Math.min(totalPages - 1, p + 1))}
+                        disabled={productPage === totalPages - 1}
+                        className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </section>
 
           <aside className="lg:col-span-3 hidden lg:block">

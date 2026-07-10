@@ -23,10 +23,29 @@ type CartItem = {
   quantity: number;
 };
 
+function MaintenancePage() {
+  return (
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 text-center">
+      <div className="max-w-lg">
+        <div className="text-8xl mb-8">🚧</div>
+        <h1 className="text-4xl font-black text-white mb-4 tracking-tight">SITE EM MANUTENÇÃO!</h1>
+        <p className="text-[#00ff00] text-xl font-semibold mb-3">Estamos trabalhando para melhorar sua experiência.</p>
+        <p className="text-gray-400 text-lg">Voltaremos em breve!</p>
+        <div className="mt-10 flex justify-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-[#00ff00] animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-3 h-3 rounded-full bg-[#00ff00] animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-3 h-3 rounded-full bg-[#00ff00] animate-bounce" style={{ animationDelay: '300ms' }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [redirectToCheckout, setRedirectToCheckout] = useState(false);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
   const { user, loading, isAdmin } = useAuth();
 
   useEffect(() => {
@@ -36,6 +55,21 @@ function AppContent() {
       }
     });
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    supabase.from('banner_settings').select('maintenance_mode').limit(1).maybeSingle().then(({ data }) => {
+      if (data) setMaintenanceMode(data.maintenance_mode ?? false);
+    });
+
+    const channel = supabase
+      .channel('maintenance_mode_watch')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'banner_settings' }, (payload) => {
+        setMaintenanceMode((payload.new as any).maintenance_mode ?? false);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   useEffect(() => {
@@ -73,6 +107,10 @@ function AppContent() {
         <div className="text-white text-xl">Carregando...</div>
       </div>
     );
+  }
+
+  if (maintenanceMode && !isAdmin) {
+    return <MaintenancePage />;
   }
 
   const renderPage = () => {

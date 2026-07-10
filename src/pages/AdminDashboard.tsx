@@ -145,7 +145,25 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
   const [bulkAdjustMode, setBulkAdjustMode] = useState<'increase' | 'decrease'>('increase');
   const [bulkAdjustLoading, setBulkAdjustLoading] = useState(false);
 
+  const [productPage, setProductPage] = useState(0);
+  const PRODUCTS_PER_PAGE = 50;
+
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+
   const valorFinal = (productForm.valor_compra || 0) + (productForm.lucro || 0);
+
+  const highlightDiamond = (name: string) => {
+    const parts = name.split(/(DIAMOND)/gi);
+    return parts.map((part, i) =>
+      part.toUpperCase() === 'DIAMOND'
+        ? <span key={i} className="text-orange-500 font-bold">{part}</span>
+        : part
+    );
+  };
+
+  useEffect(() => {
+    setProductPage(0);
+  }, [productBrandFilter, productSearch, productQuickFilter]);
 
   useEffect(() => {
     loadAllData();
@@ -170,7 +188,8 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .order('order_position', { ascending: true });
+      .order('order_position', { ascending: true })
+      .range(0, 9999);
     if (!error) setProducts(data || []);
   };
 
@@ -198,6 +217,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
       });
       setDisableOutOfStock(data.disable_out_of_stock ?? false);
       setDisableZeroPrice(data.disable_zero_price ?? false);
+      setMaintenanceMode(data.maintenance_mode ?? false);
     }
   };
 
@@ -523,6 +543,20 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     }
   };
 
+  const handleMaintenanceModeToggle = async (value: boolean) => {
+    const bannerId = banners[0]?.id;
+    if (!bannerId) { await loadBanners(); return; }
+    setMaintenanceMode(value);
+    const { error } = await supabase
+      .from('banner_settings')
+      .update({ maintenance_mode: value, updated_at: new Date().toISOString() })
+      .eq('id', bannerId);
+    if (error) {
+      setMaintenanceMode(!value);
+      setMessage('Erro ao salvar modo manutenção: ' + error.message);
+    }
+  };
+
   const handleBannerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
@@ -756,6 +790,8 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
   }
 
   const filteredProducts = getFilteredProducts();
+  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+  const paginatedProducts = filteredProducts.slice(productPage * PRODUCTS_PER_PAGE, (productPage + 1) * PRODUCTS_PER_PAGE);
   const uniqueBrands = Array.from(new Set(products.map(p => p.brand).filter(Boolean)));
 
   return (
@@ -1204,7 +1240,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                       Arraste os produtos para reordenar. A ordem aqui é a mesma exibida na home.
                     </p>
                     <div className="space-y-2">
-                      {filteredProducts.map((product) => (
+                      {paginatedProducts.map((product) => (
                         <div
                           key={product.id}
                           draggable
@@ -1228,7 +1264,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                             onClick={(e) => e.stopPropagation()}
                           />
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-bold truncate">{product.name}</h4>
+                            <h4 className="font-bold truncate">{highlightDiamond(product.name)}</h4>
                             <p className="text-sm text-gray-600">
                               {product.brand}
                               {product.tipo ? ` • ${product.tipo}` : ''}
@@ -1256,6 +1292,35 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                         </div>
                       ))}
                     </div>
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-2 mt-6">
+                        <button
+                          onClick={() => setProductPage(p => Math.max(0, p - 1))}
+                          disabled={productPage === 0}
+                          className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        >
+                          ← Anterior
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setProductPage(i)}
+                            className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
+                              productPage === i ? 'bg-[#00ff00] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => setProductPage(p => Math.min(totalPages - 1, p + 1))}
+                          disabled={productPage === totalPages - 1}
+                          className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        >
+                          Próxima →
+                        </button>
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -1316,7 +1381,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                                           />
                                           <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                              <h4 className="font-semibold text-sm truncate">{product.name}</h4>
+                                              <h4 className="font-semibold text-sm truncate">{highlightDiamond(product.name)}</h4>
                                               {product.tipo && (
                                                 <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium shrink-0">{product.tipo}</span>
                                               )}
@@ -1580,6 +1645,32 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                     Salvar Alterações
                   </button>
                 </form>
+
+                <div className="mt-8 border-t border-gray-200 pt-8">
+                  <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+                    <span className="text-2xl">🚧</span> Modo Manutenção
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Quando ativado, visitantes verão uma tela de manutenção. Administradores continuam com acesso normal.
+                  </p>
+                  <div className={`flex items-center justify-between p-5 rounded-xl border-2 transition-all ${maintenanceMode ? 'bg-red-50 border-red-400' : 'bg-gray-50 border-gray-200'}`}>
+                    <div>
+                      <p className={`font-bold text-lg ${maintenanceMode ? 'text-red-700' : 'text-gray-700'}`}>
+                        {maintenanceMode ? '🔴 Loja em Manutenção' : '🟢 Loja Online'}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-0.5">
+                        {maintenanceMode ? 'Visitantes estão vendo a página de manutenção.' : 'A loja está acessível ao público.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleMaintenanceModeToggle(!maintenanceMode)}
+                      className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none ${maintenanceMode ? 'bg-red-500' : 'bg-gray-300'}`}
+                    >
+                      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform ${maintenanceMode ? 'translate-x-8' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
