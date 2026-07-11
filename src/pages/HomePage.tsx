@@ -470,7 +470,7 @@ export default function HomePage({
               </div>
             </div>
 
-            {!selectedTipo && !searchQuery ? (
+            {!selectedBrand && !searchQuery ? (
               <div className="flex items-center justify-center py-4">
                 <img
                   src="/home-menu.png"
