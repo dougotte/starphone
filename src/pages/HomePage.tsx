@@ -356,12 +356,7 @@ export default function HomePage({
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 pb-24 lg:pb-8" onClick={(e) => {
-        if ((e.target as HTMLElement).closest('button, a, input') === null) {
-          setSelectedBrand(null);
-          setSelectedTipo(null);
-        }
-      }}>
+      <main className="max-w-7xl mx-auto px-4 pb-24 lg:pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <aside className="lg:col-span-3 hidden lg:block">
             <BrandFilter
