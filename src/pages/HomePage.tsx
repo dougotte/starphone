@@ -114,20 +114,33 @@ export default function HomePage({
 
   const loadAllProducts = async () => {
     setLoading(true);
-    const batchSize = 1000;
+    const batchSize = 500;
     let all: Product[] = [];
     let from = 0;
+    let usedBatch = true;
+
     while (true) {
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .order('order_position', { ascending: true })
         .range(from, from + batchSize - 1);
-      if (error || !data || data.length === 0) break;
+
+      if (error) { usedBatch = false; break; }
+      if (!data || data.length === 0) break;
       all = [...all, ...data];
       if (data.length < batchSize) break;
       from += batchSize;
     }
+
+    if (!usedBatch) {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .order('order_position', { ascending: true });
+      all = data || [];
+    }
+
     setProducts(all);
     setLoading(false);
   };
