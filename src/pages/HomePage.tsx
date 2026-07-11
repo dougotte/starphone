@@ -114,17 +114,21 @@ export default function HomePage({
 
   const loadAllProducts = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('order_position', { ascending: true })
-      .range(0, 9999);
-
-    if (error) {
-      console.error('Error loading products:', error);
-    } else {
-      setProducts(data || []);
+    const batchSize = 1000;
+    let all: Product[] = [];
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('order_position', { ascending: true })
+        .range(from, from + batchSize - 1);
+      if (error || !data || data.length === 0) break;
+      all = [...all, ...data];
+      if (data.length < batchSize) break;
+      from += batchSize;
     }
+    setProducts(all);
     setLoading(false);
   };
 
