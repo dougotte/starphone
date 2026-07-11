@@ -114,31 +114,11 @@ export default function HomePage({
 
   const loadAllProducts = async () => {
     setLoading(true);
-    let all: Product[] = [];
-
-    // Load first batch (up to 1000 rows — Supabase default max)
-    const { data: data1 } = await supabase
+    const { data } = await supabase
       .from('products')
       .select('*')
-      .order('order_position', { ascending: true })
-      .range(0, 999);
-
-    if (data1) {
-      all = data1;
-      // If we got exactly 1000, there may be more — fetch the rest
-      if (data1.length === 1000) {
-        const { data: data2 } = await supabase
-          .from('products')
-          .select('*')
-          .order('order_position', { ascending: true })
-          .range(1000, 1999);
-        if (data2 && data2.length > 0) {
-          all = [...all, ...data2];
-        }
-      }
-    }
-
-    setProducts(all);
+      .order('order_position', { ascending: true });
+    setProducts(data || []);
     setLoading(false);
   };
 
