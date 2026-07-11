@@ -114,31 +114,28 @@ export default function HomePage({
 
   const loadAllProducts = async () => {
     setLoading(true);
-    const batchSize = 500;
     let all: Product[] = [];
-    let from = 0;
-    let usedBatch = true;
 
-    while (true) {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('order_position', { ascending: true })
-        .range(from, from + batchSize - 1);
+    // Load first batch (up to 1000 rows — Supabase default max)
+    const { data: data1 } = await supabase
+      .from('products')
+      .select('*')
+      .order('order_position', { ascending: true })
+      .range(0, 999);
 
-      if (error) { usedBatch = false; break; }
-      if (!data || data.length === 0) break;
-      all = [...all, ...data];
-      if (data.length < batchSize) break;
-      from += batchSize;
-    }
-
-    if (!usedBatch) {
-      const { data } = await supabase
-        .from('products')
-        .select('*')
-        .order('order_position', { ascending: true });
-      all = data || [];
+    if (data1) {
+      all = data1;
+      // If we got exactly 1000, there may be more — fetch the rest
+      if (data1.length === 1000) {
+        const { data: data2 } = await supabase
+          .from('products')
+          .select('*')
+          .order('order_position', { ascending: true })
+          .range(1000, 1999);
+        if (data2 && data2.length > 0) {
+          all = [...all, ...data2];
+        }
+      }
     }
 
     setProducts(all);
@@ -356,12 +353,7 @@ export default function HomePage({
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 pb-24 lg:pb-8" onClick={(e) => {
-        if ((e.target as HTMLElement).closest('button, a, input') === null) {
-          setSelectedBrand(null);
-          setSelectedTipo(null);
-        }
-      }}>
+      <main className="max-w-7xl mx-auto px-4 pb-24 lg:pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <aside className="lg:col-span-3 hidden lg:block">
             <BrandFilter
@@ -437,7 +429,7 @@ export default function HomePage({
                     {getTiposForBrand(selectedBrand).map((tipo) => (
                       <button
                         key={tipo}
-                        onClick={() => setSelectedTipo(tipo)}
+                        onClick={() => setSelectedTipo(tipo === selectedTipo ? null : tipo)}
                         className={`px-3 py-1.5 rounded-lg font-medium transition text-xs ${
                           selectedTipo === tipo
                             ? 'ring-2 ring-[#00ff00] text-white'
