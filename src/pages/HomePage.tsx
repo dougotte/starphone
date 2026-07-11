@@ -462,15 +462,7 @@ export default function HomePage({
               </div>
             </div>
 
-            {!selectedBrand && !searchQuery ? (
-              <div className="flex items-center justify-center py-4">
-                <img
-                  src="/home-menu.png"
-                  alt="Escolha uma marca no menu e encontre sua peça"
-                  className="w-full max-w-md rounded-2xl shadow-lg"
-                />
-              </div>
-            ) : (() => {
+            {(() => {
               const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
               const paginated = filteredProducts.slice(productPage * PRODUCTS_PER_PAGE, (productPage + 1) * PRODUCTS_PER_PAGE);
               return (
