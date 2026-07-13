@@ -307,6 +307,8 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     if (!error) {
       setMessage('Produto excluído!');
       loadProducts();
+    } else {
+      setMessage('Erro ao excluir produto: ' + error.message);
     }
   };
 
@@ -463,11 +465,17 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
 
     setProducts(updatedProducts.sort((a, b) => (a.order_position ?? 0) - (b.order_position ?? 0)));
 
-    await Promise.all(
+    const results = await Promise.all(
       updates.map(({ id, order_position }) =>
         supabase.from('products').update({ order_position }).eq('id', id)
       )
     );
+
+    const failed = results.some(r => r.error);
+    if (failed) {
+      setMessage('Erro ao salvar nova ordem. Recarregando...');
+      loadProducts();
+    }
 
     setDraggingId(null);
     setDragOverId(null);
@@ -503,11 +511,17 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
 
     setProducts(updatedProducts.sort((a, b) => (a.order_position ?? 0) - (b.order_position ?? 0)));
 
-    await Promise.all(
+    const groupResults = await Promise.all(
       updates.map(({ id, order_position }) =>
         supabase.from('products').update({ order_position }).eq('id', id)
       )
     );
+
+    const groupFailed = groupResults.some(r => r.error);
+    if (groupFailed) {
+      setMessage('Erro ao salvar nova ordem. Recarregando...');
+      loadProducts();
+    }
 
     setDraggingId(null);
     setDragOverId(null);
@@ -1290,15 +1304,15 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                               {` • Estoque: ${product.estoque ?? product.stock}`}
                             </p>
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-2 shrink-0" draggable={false}>
                             <button
-                              onClick={() => handleEditProduct(product)}
+                              onClick={(e) => { e.stopPropagation(); handleEditProduct(product); }}
                               className="text-blue-600 hover:text-blue-800 font-medium text-sm px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 transition"
                             >
                               Editar
                             </button>
                             <button
-                              onClick={() => handleDeleteProduct(product.id!)}
+                              onClick={(e) => { e.stopPropagation(); handleDeleteProduct(product.id!); }}
                               className="text-red-600 hover:text-red-800 transition"
                             >
                               <Trash2 size={18} />
@@ -1380,15 +1394,15 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                                               {product.segunda_opcao ? ` • ${product.segunda_opcao}` : ''}
                                             </p>
                                           </div>
-                                          <div className="flex items-center gap-2 shrink-0">
+                                          <div className="flex items-center gap-2 shrink-0" draggable={false}>
                                             <button
-                                              onClick={() => handleEditProduct(product)}
+                                              onClick={(e) => { e.stopPropagation(); handleEditProduct(product); }}
                                               className="text-blue-600 hover:text-blue-800 font-medium text-xs px-2.5 py-1 rounded border border-blue-200 hover:bg-blue-50 transition"
                                             >
                                               Editar
                                             </button>
                                             <button
-                                              onClick={() => handleDeleteProduct(product.id!)}
+                                              onClick={(e) => { e.stopPropagation(); handleDeleteProduct(product.id!); }}
                                               className="text-red-500 hover:text-red-700 transition"
                                             >
                                               <Trash2 size={16} />
