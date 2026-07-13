@@ -117,7 +117,7 @@ function AppContent() {
     );
   }
 
-  if (maintenanceMode && !isAdmin) {
+  if (maintenanceMode && !isAdmin && currentPage !== 'admin-login' && currentPage !== 'admin-dashboard') {
     return <MaintenancePage onNavigate={setCurrentPage} />;
   }
 
