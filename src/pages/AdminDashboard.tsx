@@ -1315,32 +1315,39 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                       ))}
                     </div>
                     {totalPages > 1 && (
-                      <div className="flex items-center justify-center gap-2 mt-6">
-                        <button
-                          onClick={() => setProductPage(p => Math.max(0, p - 1))}
-                          disabled={productPage === 0}
-                          className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                        >
-                          ← Anterior
-                        </button>
-                        {Array.from({ length: totalPages }, (_, i) => (
+                      <div className="mt-6 space-y-2">
+                        <div className="flex items-center justify-center gap-2">
                           <button
-                            key={i}
-                            onClick={() => setProductPage(i)}
-                            className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
-                              productPage === i ? 'bg-[#00ff00] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                            onClick={() => setProductPage(p => Math.max(0, p - 1))}
+                            disabled={productPage === 0}
+                            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition flex-shrink-0"
                           >
-                            {i + 1}
+                            ← Anterior
                           </button>
-                        ))}
-                        <button
-                          onClick={() => setProductPage(p => Math.min(totalPages - 1, p + 1))}
-                          disabled={productPage === totalPages - 1}
-                          className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                        >
-                          Próxima →
-                        </button>
+                          <span className="text-sm text-gray-600 font-medium whitespace-nowrap">
+                            Pág. {productPage + 1} / {totalPages}
+                          </span>
+                          <button
+                            onClick={() => setProductPage(p => Math.min(totalPages - 1, p + 1))}
+                            disabled={productPage === totalPages - 1}
+                            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition flex-shrink-0"
+                          >
+                            Próxima →
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-center gap-1">
+                          {Array.from({ length: totalPages }, (_, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setProductPage(i)}
+                              className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
+                                productPage === i ? 'bg-[#00ff00] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              {i + 1}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </>

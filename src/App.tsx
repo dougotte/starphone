@@ -23,9 +23,17 @@ type CartItem = {
   quantity: number;
 };
 
-function MaintenancePage() {
+function MaintenancePage({ onNavigate }: { onNavigate: (page: Page) => void }) {
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 text-center">
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 text-center relative">
+      <div className="absolute top-4 right-4">
+        <button
+          onClick={() => onNavigate('admin-login')}
+          className="text-gray-600 hover:text-gray-400 text-xs transition underline"
+        >
+          Acesso Admin
+        </button>
+      </div>
       <div className="max-w-lg">
         <div className="text-8xl mb-8">🚧</div>
         <h1 className="text-4xl font-black text-white mb-4 tracking-tight">SITE EM MANUTENÇÃO!</h1>
@@ -110,7 +118,7 @@ function AppContent() {
   }
 
   if (maintenanceMode && !isAdmin) {
-    return <MaintenancePage />;
+    return <MaintenancePage onNavigate={setCurrentPage} />;
   }
 
   const renderPage = () => {

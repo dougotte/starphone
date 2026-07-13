@@ -154,8 +154,8 @@ export default function ProductList({ products, onAddToCart, loading, disableOut
               <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
                 <Smartphone size={18} className="text-gray-600" />
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-0.5">
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-0.5 break-words">
                   {product.name}
                 </h3>
                 {product.tipo && (
@@ -167,7 +167,7 @@ export default function ProductList({ products, onAddToCart, loading, disableOut
                   R$ {product.price.toFixed(2)}
                 </p>
               </div>
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-col items-end gap-2 flex-shrink-0">
                 {!isUnavailable(product) && (
                   <div className="flex items-center border border-gray-300 rounded-lg">
                     <button
