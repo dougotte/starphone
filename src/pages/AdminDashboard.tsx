@@ -145,8 +145,6 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
   const [bulkAdjustMode, setBulkAdjustMode] = useState<'increase' | 'decrease'>('increase');
   const [bulkAdjustLoading, setBulkAdjustLoading] = useState(false);
 
-  const [productPage, setProductPage] = useState(0);
-  const PRODUCTS_PER_PAGE = 50;
 
   const [maintenanceMode, setMaintenanceMode] = useState(false);
 
@@ -161,9 +159,6 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     );
   };
 
-  useEffect(() => {
-    setProductPage(0);
-  }, [productBrandFilter, productSearch, productQuickFilter]);
 
   useEffect(() => {
     loadAllData();
@@ -812,8 +807,6 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
   }
 
   const filteredProducts = getFilteredProducts();
-  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
-  const paginatedProducts = filteredProducts.slice(productPage * PRODUCTS_PER_PAGE, (productPage + 1) * PRODUCTS_PER_PAGE);
   const uniqueBrands = Array.from(new Set(products.map(p => p.brand).filter(Boolean)));
 
   return (
@@ -1262,7 +1255,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                       Arraste os produtos para reordenar. A ordem aqui é a mesma exibida na home.
                     </p>
                     <div className="space-y-2">
-                      {paginatedProducts.map((product) => (
+                      {filteredProducts.map((product) => (
                         <div
                           key={product.id}
                           draggable
@@ -1314,42 +1307,6 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                         </div>
                       ))}
                     </div>
-                    {totalPages > 1 && (
-                      <div className="mt-6 space-y-2">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => setProductPage(p => Math.max(0, p - 1))}
-                            disabled={productPage === 0}
-                            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition flex-shrink-0"
-                          >
-                            ← Anterior
-                          </button>
-                          <span className="text-sm text-gray-600 font-medium whitespace-nowrap">
-                            Pág. {productPage + 1} / {totalPages}
-                          </span>
-                          <button
-                            onClick={() => setProductPage(p => Math.min(totalPages - 1, p + 1))}
-                            disabled={productPage === totalPages - 1}
-                            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition flex-shrink-0"
-                          >
-                            Próxima →
-                          </button>
-                        </div>
-                        <div className="flex flex-wrap items-center justify-center gap-1">
-                          {Array.from({ length: totalPages }, (_, i) => (
-                            <button
-                              key={i}
-                              onClick={() => setProductPage(i)}
-                              className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
-                                productPage === i ? 'bg-[#00ff00] text-black' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                            >
-                              {i + 1}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </>
                 )}
 

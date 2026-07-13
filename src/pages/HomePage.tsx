@@ -190,6 +190,7 @@ export default function HomePage({
       );
     }
 
+    filtered.sort((a, b) => (b.order_position || 0) - (a.order_position || 0));
     setFilteredProducts(filtered);
   };
 
