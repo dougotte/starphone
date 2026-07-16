@@ -368,14 +368,20 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     setBulkAdjustLoading(true);
     setMessage('');
     try {
-      await Promise.all(
+      const results = await Promise.all(
         affected.map(p => {
           const newPrice = Math.max(0, (p.price ?? 0) + (bulkAdjustMode === 'increase' ? delta : -delta));
-          return supabase.from('products').update({ price: newPrice }).eq('id', p.id!);
+          const newLucro = Math.max(0, newPrice - (p.valor_compra ?? 0));
+          return supabase.from('products').update({ price: newPrice, lucro: newLucro }).eq('id', p.id!);
         })
       );
-      setMessage(`Preço ajustado em ${affected.length} produto(s) do tipo "${bulkAdjustTipo}"!`);
-      setBulkAdjustValue('');
+      const failed = results.filter(r => r.error);
+      if (failed.length > 0) {
+        setMessage(`Erro ao ajustar preços: ${failed[0].error!.message}`);
+      } else {
+        setMessage(`Preço ajustado em ${affected.length} produto(s) do tipo "${bulkAdjustTipo}"!`);
+        setBulkAdjustValue('');
+      }
       await loadProducts();
     } catch {
       setMessage('Erro ao ajustar preços.');
