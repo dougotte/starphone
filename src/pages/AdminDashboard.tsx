@@ -370,8 +370,9 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     try {
       const results = await Promise.all(
         affected.map(p => {
-          const newPrice = Math.max(0, (p.price ?? 0) + (bulkAdjustMode === 'increase' ? delta : -delta));
-          const newLucro = Math.max(0, newPrice - (p.valor_compra ?? 0));
+          const adjustment = bulkAdjustMode === 'increase' ? delta : -delta;
+          const newPrice = Math.max(0, (p.price ?? 0) + adjustment);
+          const newLucro = Math.max(0, (p.lucro ?? 0) + adjustment);
           return supabase.from('products').update({ price: newPrice, lucro: newLucro }).eq('id', p.id!);
         })
       );
