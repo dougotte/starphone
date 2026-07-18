@@ -79,7 +79,16 @@ type ClientUser = {
   name?: string;
   email?: string;
   cpf?: string;
+  phone?: string;
+  cep?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
   purchase_locked?: boolean;
+  created_at?: string;
 };
 
 
@@ -273,7 +282,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     setClientsLoading(true);
     const { data, error } = await supabase
       .from('user_profiles')
-      .select('id, user_id, name, email, cpf, purchase_locked')
+      .select('id, user_id, name, email, cpf, phone, cep, street, number, complement, neighborhood, city, state, purchase_locked, created_at')
       .order('created_at', { ascending: false });
     if (!error) setClients(data || []);
     setClientsLoading(false);
@@ -304,6 +313,36 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
     } else {
       setClients(prev => prev.map(c => c.id === client.id ? { ...c, purchase_locked: newValue } : c));
       setMessage(newValue ? `Usuário ${client.name || client.email || 'cliente'} travado.` : `Usuário ${client.name || client.email || 'cliente'} liberado.`);
+    }
+  };
+
+  const formatCpf = (value: string) => {
+    const d = (value || '').replace(/\D/g, '').slice(0, 11);
+    return d
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  };
+
+  const formatPhone = (value: string) => {
+    const d = (value || '').replace(/\D/g, '').slice(0, 11);
+    if (d.length <= 10) {
+      return d.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)$/, '$1-$2');
+    }
+    return d.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)$/, '$1-$2');
+  };
+
+  const handleDeleteClient = async (client: ClientUser) => {
+    if (!confirm(`Excluir o cadastro de "${client.name || client.email || 'cliente'}"? Esta ação não pode ser desfeita.`)) return;
+    const { error } = await supabase
+      .from('user_profiles')
+      .delete()
+      .eq('id', client.id);
+    if (error) {
+      setMessage('Erro ao excluir cliente: ' + error.message);
+    } else {
+      setClients(prev => prev.filter(c => c.id !== client.id));
+      setMessage('Cliente excluído com sucesso.');
     }
   };
 
@@ -1945,7 +1984,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
               <div>
                 <h2 className="text-2xl font-bold mb-2">Clientes Cadastrados</h2>
                 <p className="text-sm text-gray-600 mb-6">
-                  Trave o acesso de um cliente aos preços e compras. Quando travado, o cliente vê o botão "Entre em contato para poder comprar" em vez do preço e do carrinho.
+                  Trave o acesso de um cliente aos preços e compras, ou exclua seu cadastro. Quando travado, o cliente vê o botão "Entre em contato para poder comprar" em vez do preço e do carrinho.
                 </p>
 
                 {clientsLoading ? (
@@ -1953,30 +1992,58 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                 ) : clients.length === 0 ? (
                   <p className="text-gray-500">Nenhum cliente cadastrado ainda.</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {clients.map((client) => (
-                      <div
-                        key={client.id}
-                        className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border p-4 rounded-lg hover:bg-gray-50"
-                      >
-                        <div className="min-w-0">
-                          <h4 className="font-bold truncate">
-                            {client.name || 'Sem nome'}
-                          </h4>
-                          <p className="text-sm text-gray-600 truncate">{client.email || 'Sem e-mail'}</p>
-                          {client.cpf && <p className="text-xs text-gray-500">CPF: {client.cpf}</p>}
+                      <div key={client.id} className="border border-gray-200 rounded-lg p-5 hover:shadow-md transition">
+                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-3">
+                              <h4 className="font-bold text-lg truncate">{client.name || 'Sem nome'}</h4>
+                              {client.purchase_locked && (
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-300">
+                                  <Lock size={12} /> Travado
+                                </span>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+                              <p className="text-gray-600"><span className="font-medium text-gray-800">Email:</span> {client.email || '—'}</p>
+                              <p className="text-gray-600"><span className="font-medium text-gray-800">CPF:</span> {client.cpf ? formatCpf(client.cpf) : '—'}</p>
+                              <p className="text-gray-600"><span className="font-medium text-gray-800">Telefone:</span> {client.phone ? formatPhone(client.phone) : '—'}</p>
+                              <p className="text-gray-600"><span className="font-medium text-gray-800">CEP:</span> {client.cep || '—'}</p>
+                              <p className="text-gray-600"><span className="font-medium text-gray-800">Rua:</span> {client.street || '—'}</p>
+                              <p className="text-gray-600"><span className="font-medium text-gray-800">Número:</span> {client.number || '—'}</p>
+                              <p className="text-gray-600"><span className="font-medium text-gray-800">Complemento:</span> {client.complement || '—'}</p>
+                              <p className="text-gray-600"><span className="font-medium text-gray-800">Bairro:</span> {client.neighborhood || '—'}</p>
+                              <p className="text-gray-600"><span className="font-medium text-gray-800">Cidade:</span> {client.city || '—'}</p>
+                              <p className="text-gray-600"><span className="font-medium text-gray-800">Estado:</span> {client.state || '—'}</p>
+                              {client.created_at && (
+                                <p className="text-gray-500 text-xs sm:col-span-2 mt-1">
+                                  Cadastrado em {new Date(client.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-row lg:flex-col gap-2 flex-shrink-0">
+                            <button
+                              onClick={() => handleTogglePurchaseLock(client)}
+                              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition whitespace-nowrap ${
+                                client.purchase_locked
+                                  ? 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-300'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                              }`}
+                            >
+                              {client.purchase_locked ? <Lock size={16} /> : <Unlock size={16} />}
+                              {client.purchase_locked ? 'Travado' : 'Liberado'}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClient(client)}
+                              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition whitespace-nowrap bg-red-600 text-white hover:bg-red-700"
+                            >
+                              <Trash2 size={16} />
+                              Excluir
+                            </button>
+                          </div>
                         </div>
-                        <button
-                          onClick={() => handleTogglePurchaseLock(client)}
-                          className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition whitespace-nowrap ${
-                            client.purchase_locked
-                              ? 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-300'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
-                          }`}
-                        >
-                          {client.purchase_locked ? <Lock size={16} /> : <Unlock size={16} />}
-                          {client.purchase_locked ? 'Travado' : 'Liberado'}
-                        </button>
                       </div>
                     ))}
                   </div>

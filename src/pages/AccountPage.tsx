@@ -164,6 +164,38 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
     setSaving(true);
     setMessage('');
 
+    const requiredFields: { key: keyof typeof profile; label: string }[] = [
+      { key: 'name', label: 'Nome Completo' },
+      { key: 'email', label: 'Email' },
+      { key: 'cpf', label: 'CPF' },
+      { key: 'phone', label: 'Telefone' },
+      { key: 'cep', label: 'CEP' },
+      { key: 'street', label: 'Rua' },
+      { key: 'number', label: 'Número' },
+      { key: 'neighborhood', label: 'Bairro' },
+      { key: 'city', label: 'Cidade' },
+      { key: 'state', label: 'Estado' },
+    ];
+
+    const missing = requiredFields.filter(f => !String(profile[f.key]).trim());
+    if (missing.length > 0) {
+      setMessage('Preencha os campos obrigatórios: ' + missing.map(f => f.label).join(', '));
+      setSaving(false);
+      return;
+    }
+
+    if (profile.cpf.replace(/\D/g, '').length !== 11) {
+      setMessage('CPF inválido. Digite os 11 dígitos.');
+      setSaving(false);
+      return;
+    }
+
+    if (profile.phone.replace(/\D/g, '').length < 10) {
+      setMessage('Telefone inválido. Digite o DDD e o número.');
+      setSaving(false);
+      return;
+    }
+
     const { data: existingProfile } = await supabase
       .from('user_profiles')
       .select('id')
@@ -316,7 +348,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Nome Completo
+                    Nome Completo <span className="text-red-500">*</span>
                   </label>
                   <input
                     id="name"
@@ -326,12 +358,13 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="Seu nome"
                     disabled={!isEditing}
+                    required
                   />
                 </div>
 
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
+                    Email <span className="text-red-500">*</span>
                   </label>
                   <input
                     id="email"
@@ -341,12 +374,13 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="seu@email.com"
                     disabled={!isEditing}
+                    required
                   />
                 </div>
 
                 <div>
                   <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-2">
-                    CPF
+                    CPF <span className="text-red-500">*</span>
                   </label>
                   <input
                     id="cpf"
@@ -357,12 +391,13 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                     placeholder="000.000.000-00"
                     maxLength={14}
                     disabled={!isEditing}
+                    required
                   />
                 </div>
 
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                    Telefone
+                    Telefone <span className="text-red-500">*</span>
                   </label>
                   <input
                     id="phone"
@@ -373,6 +408,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                     placeholder="(00) 00000-0000"
                     maxLength={15}
                     disabled={!isEditing}
+                    required
                   />
                 </div>
               </div>
@@ -383,7 +419,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                 <div className="space-y-6">
                   <div>
                     <label htmlFor="cep" className="block text-sm font-medium text-gray-700 mb-2">
-                      CEP
+                      CEP <span className="text-red-500">*</span>
                     </label>
                     <input
                       id="cep"
@@ -394,6 +430,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                       placeholder="00000-000"
                       maxLength={9}
                       disabled={!isEditing}
+                      required
                     />
                     {loadingCep && (
                       <p className="text-sm text-gray-500 mt-1">Buscando endereço...</p>
@@ -402,7 +439,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
 
                   <div>
                     <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-2">
-                      Rua
+                      Rua <span className="text-red-500">*</span>
                     </label>
                     <input
                       id="street"
@@ -418,7 +455,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
-                        Número
+                        Número <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="number"
@@ -428,6 +465,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         placeholder="123"
                         disabled={!isEditing}
+                        required
                       />
                     </div>
 
@@ -449,7 +487,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
 
                   <div>
                     <label htmlFor="neighborhood" className="block text-sm font-medium text-gray-700 mb-2">
-                      Bairro
+                      Bairro <span className="text-red-500">*</span>
                     </label>
                     <input
                       id="neighborhood"
@@ -465,7 +503,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
-                        Cidade
+                        Cidade <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="city"
@@ -480,7 +518,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
 
                     <div>
                       <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
-                        Estado
+                        Estado <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="state"

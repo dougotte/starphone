@@ -270,7 +270,7 @@ export default function HomePage({
                     className="text-white hover:text-[#00ff00] transition flex items-center gap-2"
                   >
                     <User size={20} />
-                    <span>{user.email?.split('@')[0]}</span>
+                    <span>Minha Conta</span>
                   </button>
                   <button
                     onClick={handleSignOut}
