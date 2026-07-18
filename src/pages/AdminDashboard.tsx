@@ -2036,6 +2036,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                               {client.purchase_locked ? 'Travado' : 'Liberado'}
                             </button>
                             <button
+                              type="button"
                               onClick={() => handleDeleteClient(client)}
                               className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition whitespace-nowrap bg-red-600 text-white hover:bg-red-700"
                             >
