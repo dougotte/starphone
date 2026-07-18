@@ -12,6 +12,7 @@ type AuthContextType = {
   signOut: () => Promise<void>;
   isAdmin: boolean;
   adminData: any;
+  purchaseLocked: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem('adminData');
     return stored ? JSON.parse(stored) : null;
   });
+  const [purchaseLocked, setPurchaseLocked] = useState(false);
 
   useEffect(() => {
     const storedAdmin = localStorage.getItem('isAdmin');
@@ -63,8 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedAdmin = localStorage.getItem('isAdmin');
     if (!storedAdmin && user) {
       checkAdminStatus();
+      loadPurchaseLocked(user.id);
     } else if (!storedAdmin && !user) {
       setIsAdmin(false);
+      setPurchaseLocked(false);
     }
   }, [user]);
 
@@ -78,6 +82,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .maybeSingle();
 
     setIsAdmin(!!data);
+  };
+
+  const loadPurchaseLocked = async (userId: string) => {
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('purchase_locked')
+      .eq('user_id', userId)
+      .maybeSingle();
+    setPurchaseLocked(data?.purchase_locked ?? false);
   };
 
   const signUp = async (email: string, password: string) => {
@@ -164,6 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     isAdmin,
     adminData,
+    purchaseLocked,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

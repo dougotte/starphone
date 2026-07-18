@@ -44,7 +44,7 @@ export default function HomePage({
   cart: CartItem[];
   setCart: (cart: CartItem[]) => void;
 }) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, purchaseLocked } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -61,6 +61,7 @@ export default function HomePage({
     background_image_url: '',
     disable_out_of_stock: false,
     disable_zero_price: false,
+    require_login_to_view_prices: false,
   });
 
   useEffect(() => {
@@ -79,6 +80,7 @@ export default function HomePage({
             ...prev,
             disable_out_of_stock: data.disable_out_of_stock ?? false,
             disable_zero_price: data.disable_zero_price ?? false,
+            require_login_to_view_prices: data.require_login_to_view_prices ?? false,
           }));
         }
       )
@@ -165,6 +167,7 @@ export default function HomePage({
         background_image_url: data.background_image_url || '',
         disable_out_of_stock: data.disable_out_of_stock ?? false,
         disable_zero_price: data.disable_zero_price ?? false,
+        require_login_to_view_prices: data.require_login_to_view_prices ?? false,
       });
     }
   };
@@ -225,6 +228,11 @@ export default function HomePage({
   };
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const priceRestriction: 'none' | 'login' | 'contact' =
+    bannerSettings.require_login_to_view_prices && !user ? 'login'
+    : user && purchaseLocked ? 'contact'
+    : 'none';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -486,6 +494,8 @@ export default function HomePage({
                 loading={loading}
                 disableOutOfStock={bannerSettings.disable_out_of_stock}
                 disableZeroPrice={bannerSettings.disable_zero_price}
+                priceRestriction={priceRestriction}
+                onLoginPrompt={() => onNavigate('login')}
               />
             )}
           </section>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, LogOut, Trash2, Users, Image, Tag, Package, ShoppingBag, Check, X, Printer, MapPin, GripVertical, Search, ChevronDown, ChevronRight, DollarSign } from 'lucide-react';
+import { ArrowLeft, LogOut, Trash2, Users, Image, Tag, Package, ShoppingBag, Check, X, Printer, MapPin, GripVertical, Search, ChevronDown, ChevronRight, DollarSign, UserCog, Lock, Unlock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -30,6 +30,7 @@ type Banner = {
   background_image_url?: string;
   disable_out_of_stock?: boolean;
   disable_zero_price?: boolean;
+  require_login_to_view_prices?: boolean;
 };
 
 type Order = {
@@ -72,6 +73,16 @@ type AdminUser = {
   name: string;
 };
 
+type ClientUser = {
+  id: string;
+  user_id: string;
+  name?: string;
+  email?: string;
+  cpf?: string;
+  purchase_locked?: boolean;
+};
+
+
 const emptyProduct: Product = {
   name: '',
   description: '',
@@ -90,13 +101,16 @@ const emptyProduct: Product = {
 
 export default function AdminDashboard({ onNavigate }: { onNavigate: (page: PageType) => void }) {
   const { signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'banners' | 'categories' | 'admins'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'banners' | 'categories' | 'admins' | 'clients'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderSearch, setOrderSearch] = useState('');
   const [banners, setBanners] = useState<Banner[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
+  const [clients, setClients] = useState<ClientUser[]>([]);
+  const [requireLoginToViewPrices, setRequireLoginToViewPrices] = useState(false);
+  const [clientsLoading, setClientsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
@@ -175,6 +189,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
       loadBanners(),
       loadCategories(),
       loadAdmins(),
+      loadClients(),
     ]);
     setLoading(false);
   };
@@ -234,6 +249,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
       });
       setDisableOutOfStock(data.disable_out_of_stock ?? false);
       setDisableZeroPrice(data.disable_zero_price ?? false);
+      setRequireLoginToViewPrices(data.require_login_to_view_prices ?? false);
       setMaintenanceMode(data.maintenance_mode ?? false);
     }
   };
@@ -251,6 +267,44 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
       .from('admin_credentials')
       .select('id, username, name');
     if (!error) setAdmins(data || []);
+  };
+
+  const loadClients = async () => {
+    setClientsLoading(true);
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('id, user_id, name, email, cpf, purchase_locked')
+      .order('created_at', { ascending: false });
+    if (!error) setClients(data || []);
+    setClientsLoading(false);
+  };
+
+  const handleRequireLoginToggle = async (value: boolean) => {
+    setRequireLoginToViewPrices(value);
+    const { error } = await supabase
+      .from('banner_settings')
+      .update({ require_login_to_view_prices: value, updated_at: new Date().toISOString() })
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+    if (error) {
+      setRequireLoginToViewPrices(!value);
+      setMessage('Erro ao atualizar configuração: ' + error.message);
+    } else {
+      setMessage(value ? 'Visualização de preços agora exige login.' : 'Preços visíveis para todos os visitantes.');
+    }
+  };
+
+  const handleTogglePurchaseLock = async (client: ClientUser) => {
+    const newValue = !client.purchase_locked;
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ purchase_locked: newValue })
+      .eq('id', client.id);
+    if (error) {
+      setMessage('Erro ao travar/liberar usuário: ' + error.message);
+    } else {
+      setClients(prev => prev.map(c => c.id === client.id ? { ...c, purchase_locked: newValue } : c));
+      setMessage(newValue ? `Usuário ${client.name || client.email || 'cliente'} travado.` : `Usuário ${client.name || client.email || 'cliente'} liberado.`);
+    }
   };
 
   const handleSignOut = async () => {
@@ -868,6 +922,7 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                 { key: 'orders', icon: <ShoppingBag size={20} />, label: 'Pedidos' },
                 { key: 'banners', icon: <Image size={20} />, label: 'Banner Home' },
                 { key: 'categories', icon: <Tag size={20} />, label: 'Marcas' },
+                { key: 'clients', icon: <UserCog size={20} />, label: 'Clientes' },
                 { key: 'admins', icon: <Users size={20} />, label: 'Administradores' },
               ].map(tab => (
                 <button
@@ -1072,6 +1127,24 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                         <span
                           className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition duration-200 ${
                             disableZeroPrice ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                      <span className="text-sm font-medium text-gray-700 flex-1 pr-4">
+                        Exigir login do cliente para ver preços e comprar na loja?
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRequireLoginToggle(!requireLoginToViewPrices)}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                          requireLoginToViewPrices ? 'bg-[#00ff00]' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition duration-200 ${
+                            requireLoginToViewPrices ? 'translate-x-5' : 'translate-x-0'
                           }`}
                         />
                       </button>
@@ -1865,6 +1938,49 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'clients' && (
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Clientes Cadastrados</h2>
+                <p className="text-sm text-gray-600 mb-6">
+                  Trave o acesso de um cliente aos preços e compras. Quando travado, o cliente vê o botão "Entre em contato para poder comprar" em vez do preço e do carrinho.
+                </p>
+
+                {clientsLoading ? (
+                  <p className="text-gray-500">Carregando clientes...</p>
+                ) : clients.length === 0 ? (
+                  <p className="text-gray-500">Nenhum cliente cadastrado ainda.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {clients.map((client) => (
+                      <div
+                        key={client.id}
+                        className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border p-4 rounded-lg hover:bg-gray-50"
+                      >
+                        <div className="min-w-0">
+                          <h4 className="font-bold truncate">
+                            {client.name || 'Sem nome'}
+                          </h4>
+                          <p className="text-sm text-gray-600 truncate">{client.email || 'Sem e-mail'}</p>
+                          {client.cpf && <p className="text-xs text-gray-500">CPF: {client.cpf}</p>}
+                        </div>
+                        <button
+                          onClick={() => handleTogglePurchaseLock(client)}
+                          className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition whitespace-nowrap ${
+                            client.purchase_locked
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-300'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                          }`}
+                        >
+                          {client.purchase_locked ? <Lock size={16} /> : <Unlock size={16} />}
+                          {client.purchase_locked ? 'Travado' : 'Liberado'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

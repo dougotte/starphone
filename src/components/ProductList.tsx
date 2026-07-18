@@ -1,4 +1,4 @@
-import { Plus, Minus, Smartphone } from 'lucide-react';
+import { Plus, Minus, Smartphone, LogIn, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 
 type Product = {
@@ -24,9 +24,14 @@ type ProductListProps = {
   loading?: boolean;
   disableOutOfStock?: boolean;
   disableZeroPrice?: boolean;
+  /** 'login' = not logged in and store requires login; 'contact' = logged in but user is locked */
+  priceRestriction?: 'none' | 'login' | 'contact';
+  onLoginPrompt?: () => void;
 };
 
-export default function ProductList({ products, onAddToCart, loading, disableOutOfStock, disableZeroPrice }: ProductListProps) {
+const WHATSAPP_CONTACT_URL = 'https://wa.me/5519999921698';
+
+export default function ProductList({ products, onAddToCart, loading, disableOutOfStock, disableZeroPrice, priceRestriction = 'none', onLoginPrompt }: ProductListProps) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
 
   const getQuantity = (productId: string) => quantities[productId] || 1;
@@ -42,6 +47,8 @@ export default function ProductList({ products, onAddToCart, loading, disableOut
     if (disableZeroPrice && product.price === 0) return true;
     return false;
   };
+
+  const isPriceHidden = priceRestriction === 'login' || priceRestriction === 'contact';
 
   const handleAddToCart = (product: Product) => {
     if (isUnavailable(product)) return;
@@ -109,43 +116,71 @@ export default function ProductList({ products, onAddToCart, loading, disableOut
               </div>
 
               <div className="col-span-2 text-center">
-                <p className="text-lg font-bold text-black whitespace-nowrap">
-                  R$ {product.price.toFixed(2)}
-                </p>
+                {isPriceHidden ? (
+                  <p className="text-sm text-gray-400 italic">Preço sob consulta</p>
+                ) : (
+                  <p className="text-lg font-bold text-black whitespace-nowrap">
+                    R$ {product.price.toFixed(2)}
+                  </p>
+                )}
               </div>
 
               <div className="col-span-3">
                 <div className="flex flex-col items-center gap-2">
-                  {!isUnavailable(product) && (
-                    <div className="flex items-center border border-gray-300 rounded-lg">
+                  {isPriceHidden ? (
+                    priceRestriction === 'login' ? (
                       <button
-                        onClick={() => updateQuantity(product.id, getQuantity(product.id) - 1)}
-                        className="px-2 py-1 hover:bg-gray-100 transition"
+                        onClick={() => onLoginPrompt?.()}
+                        className="px-4 py-2 rounded-lg font-semibold transition text-sm w-full bg-black text-[#00ff00] hover:bg-gray-900 flex items-center justify-center gap-2"
                       >
-                        <Minus size={14} />
+                        <LogIn size={16} />
+                        Faça seu login para comprar
                       </button>
-                      <span className="px-3 py-1 min-w-[2.5rem] text-center font-medium border-x border-gray-300 text-sm">
-                        {getQuantity(product.id)}
-                      </span>
+                    ) : (
+                      <a
+                        href={WHATSAPP_CONTACT_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 rounded-lg font-semibold transition text-sm w-full bg-green-600 text-white hover:bg-green-700 flex items-center justify-center gap-2"
+                      >
+                        <MessageCircle size={16} />
+                        Entre em contato para poder comprar
+                      </a>
+                    )
+                  ) : (
+                    <>
+                      {!isUnavailable(product) && (
+                        <div className="flex items-center border border-gray-300 rounded-lg">
+                          <button
+                            onClick={() => updateQuantity(product.id, getQuantity(product.id) - 1)}
+                            className="px-2 py-1 hover:bg-gray-100 transition"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="px-3 py-1 min-w-[2.5rem] text-center font-medium border-x border-gray-300 text-sm">
+                            {getQuantity(product.id)}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(product.id, getQuantity(product.id) + 1)}
+                            className="px-2 py-1 hover:bg-gray-100 transition"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      )}
                       <button
-                        onClick={() => updateQuantity(product.id, getQuantity(product.id) + 1)}
-                        className="px-2 py-1 hover:bg-gray-100 transition"
+                        onClick={() => handleAddToCart(product)}
+                        disabled={isUnavailable(product)}
+                        className={`px-4 py-1.5 rounded-lg font-semibold transition text-sm w-full ${
+                          isUnavailable(product)
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-[#00ff00] text-black hover:bg-[#00dd00]'
+                        }`}
                       >
-                        <Plus size={14} />
+                        {isUnavailable(product) ? 'Indisponível' : '+ Adicionar'}
                       </button>
-                    </div>
+                    </>
                   )}
-                  <button
-                    onClick={() => handleAddToCart(product)}
-                    disabled={isUnavailable(product)}
-                    className={`px-4 py-1.5 rounded-lg font-semibold transition text-sm w-full ${
-                      isUnavailable(product)
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-[#00ff00] text-black hover:bg-[#00dd00]'
-                    }`}
-                  >
-                    {isUnavailable(product) ? 'Indisponível' : '+ Adicionar'}
-                  </button>
                 </div>
               </div>
             </div>
@@ -163,41 +198,69 @@ export default function ProductList({ products, onAddToCart, loading, disableOut
                     {product.tipo}
                   </span>
                 )}
-                <p className="text-base font-bold text-black whitespace-nowrap">
-                  R$ {product.price.toFixed(2)}
-                </p>
+                {isPriceHidden ? (
+                  <p className="text-sm text-gray-400 italic">Preço sob consulta</p>
+                ) : (
+                  <p className="text-base font-bold text-black whitespace-nowrap">
+                    R$ {product.price.toFixed(2)}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                {!isUnavailable(product) && (
-                  <div className="flex items-center border border-gray-300 rounded-lg">
+                {isPriceHidden ? (
+                  priceRestriction === 'login' ? (
                     <button
-                      onClick={() => updateQuantity(product.id, getQuantity(product.id) - 1)}
-                      className="px-2 py-1 hover:bg-gray-100 transition"
+                      onClick={() => onLoginPrompt?.()}
+                      className="px-3 py-1.5 rounded-lg font-semibold transition text-xs whitespace-nowrap bg-black text-[#00ff00] hover:bg-gray-900 flex items-center justify-center gap-1.5"
                     >
-                      <Minus size={14} />
+                      <LogIn size={14} />
+                      Faça seu login
                     </button>
-                    <span className="px-2 py-1 min-w-[2rem] text-center font-medium border-x border-gray-300 text-sm">
-                      {getQuantity(product.id)}
-                    </span>
+                  ) : (
+                    <a
+                      href={WHATSAPP_CONTACT_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-lg font-semibold transition text-xs whitespace-nowrap bg-green-600 text-white hover:bg-green-700 flex items-center justify-center gap-1.5"
+                    >
+                      <MessageCircle size={14} />
+                      Entre em contato
+                    </a>
+                  )
+                ) : (
+                  <>
+                    {!isUnavailable(product) && (
+                      <div className="flex items-center border border-gray-300 rounded-lg">
+                        <button
+                          onClick={() => updateQuantity(product.id, getQuantity(product.id) - 1)}
+                          className="px-2 py-1 hover:bg-gray-100 transition"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="px-2 py-1 min-w-[2rem] text-center font-medium border-x border-gray-300 text-sm">
+                          {getQuantity(product.id)}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(product.id, getQuantity(product.id) + 1)}
+                          className="px-2 py-1 hover:bg-gray-100 transition"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    )}
                     <button
-                      onClick={() => updateQuantity(product.id, getQuantity(product.id) + 1)}
-                      className="px-2 py-1 hover:bg-gray-100 transition"
+                      onClick={() => handleAddToCart(product)}
+                      disabled={isUnavailable(product)}
+                      className={`px-3 py-1.5 rounded-lg font-semibold transition text-xs whitespace-nowrap ${
+                        isUnavailable(product)
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-[#00ff00] text-black hover:bg-[#00dd00]'
+                      }`}
                     >
-                      <Plus size={14} />
+                      {isUnavailable(product) ? 'Indisponível' : 'Adicionar'}
                     </button>
-                  </div>
+                  </>
                 )}
-                <button
-                  onClick={() => handleAddToCart(product)}
-                  disabled={isUnavailable(product)}
-                  className={`px-3 py-1.5 rounded-lg font-semibold transition text-xs whitespace-nowrap ${
-                    isUnavailable(product)
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-[#00ff00] text-black hover:bg-[#00dd00]'
-                  }`}
-                >
-                  {isUnavailable(product) ? 'Indisponível' : 'Adicionar'}
-                </button>
               </div>
             </div>
           </div>
