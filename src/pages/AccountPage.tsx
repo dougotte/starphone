@@ -108,8 +108,29 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
     }
   };
 
+  const maskCpf = (value: string) => {
+    const d = value.replace(/\D/g, '').slice(0, 11);
+    return d
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  };
+
+  const maskPhone = (value: string) => {
+    const d = value.replace(/\D/g, '').slice(0, 11);
+    if (d.length <= 10) {
+      return d.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)$/, '$1-$2');
+    }
+    return d.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)$/, '$1-$2');
+  };
+
+  const maskCep = (value: string) => {
+    const d = value.replace(/\D/g, '').slice(0, 8);
+    return d.replace(/(\d{5})(\d)/, '$1-$2');
+  };
+
   const handleCepChange = async (cep: string) => {
-    const cleanCep = cep.replace(/\D/g, '');
+    const cleanCep = cep.replace(/\D/g, '').slice(0, 8);
     setProfile({ ...profile, cep: cleanCep });
 
     if (cleanCep.length === 8) {
@@ -153,18 +174,44 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
     if (existingProfile) {
       const result = await supabase
         .from('user_profiles')
-        .update(profile)
-        .eq('user_id', user!.id);
+        .update({
+          name: profile.name,
+          email: profile.email,
+          cpf: profile.cpf.replace(/\D/g, ''),
+          phone: profile.phone,
+          cep: profile.cep,
+          street: profile.street,
+          number: profile.number,
+          complement: profile.complement,
+          neighborhood: profile.neighborhood,
+          city: profile.city,
+          state: profile.state,
+        })
+        .eq('user_id', user!.id)
+        .select();
       error = result.error;
     } else {
       const result = await supabase
         .from('user_profiles')
-        .insert({ ...profile, user_id: user!.id });
+        .insert({
+          name: profile.name,
+          email: profile.email,
+          cpf: profile.cpf.replace(/\D/g, ''),
+          phone: profile.phone,
+          cep: profile.cep,
+          street: profile.street,
+          number: profile.number,
+          complement: profile.complement,
+          neighborhood: profile.neighborhood,
+          city: profile.city,
+          state: profile.state,
+          user_id: user!.id,
+        });
       error = result.error;
     }
 
     if (error) {
-      setMessage('Erro ao salvar perfil');
+      setMessage('Erro ao salvar perfil: ' + error.message);
       console.error('Error saving profile:', error);
     } else {
       setMessage('Perfil atualizado com sucesso!');
@@ -304,11 +351,11 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                   <input
                     id="cpf"
                     type="text"
-                    value={profile.cpf}
+                    value={maskCpf(profile.cpf)}
                     onChange={(e) => setProfile({ ...profile, cpf: e.target.value.replace(/\D/g, '') })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="000.000.000-00"
-                    maxLength={11}
+                    maxLength={14}
                     disabled={!isEditing}
                   />
                 </div>
@@ -320,10 +367,11 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                   <input
                     id="phone"
                     type="tel"
-                    value={profile.phone}
-                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                    value={maskPhone(profile.phone)}
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value.replace(/\D/g, '') })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="(00) 00000-0000"
+                    maxLength={15}
                     disabled={!isEditing}
                   />
                 </div>
@@ -340,11 +388,11 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                     <input
                       id="cep"
                       type="text"
-                      value={profile.cep}
+                      value={maskCep(profile.cep)}
                       onChange={(e) => handleCepChange(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                       placeholder="00000-000"
-                      maxLength={8}
+                      maxLength={9}
                       disabled={!isEditing}
                     />
                     {loadingCep && (
