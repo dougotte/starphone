@@ -119,10 +119,11 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
 
   const maskPhone = (value: string) => {
     const d = value.replace(/\D/g, '').slice(0, 11);
-    if (d.length <= 10) {
-      return d.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)$/, '$1-$2');
-    }
-    return d.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)$/, '$1-$2');
+    if (d.length === 0) return '';
+    if (d.length <= 2) return `(${d}`;
+    if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
   };
 
   const maskCep = (value: string) => {
@@ -166,7 +167,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
       { key: 'phone', label: 'Telefone' },
       { key: 'cep', label: 'CEP' },
       { key: 'street', label: 'Rua' },
-      { key: 'number', label: 'Número' },
+      { key: 'number', label: 'Numero' },
       { key: 'neighborhood', label: 'Bairro' },
       { key: 'city', label: 'Cidade' },
       { key: 'state', label: 'Estado' },
@@ -174,19 +175,19 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
 
     const missing = requiredFields.filter(f => !String(profile[f.key]).trim());
     if (missing.length > 0) {
-      setMessage('Preencha os campos obrigatórios: ' + missing.map(f => f.label).join(', '));
+      setMessage('Preencha os campos obrigatorios: ' + missing.map(f => f.label).join(', '));
       setSaving(false);
       return;
     }
 
     if (profile.cpf.replace(/\D/g, '').length !== 11) {
-      setMessage('CPF inválido. Digite os 11 dígitos.');
+      setMessage('CPF invalido. Digite os 11 digitos.');
       setSaving(false);
       return;
     }
 
     if (profile.phone.replace(/\D/g, '').length < 10) {
-      setMessage('Telefone inválido. Digite o DDD e o número.');
+      setMessage('Telefone invalido. Digite o DDD e o numero.');
       setSaving(false);
       return;
     }
@@ -205,7 +206,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
           name: profile.name,
           email: profile.email,
           cpf: profile.cpf.replace(/\D/g, ''),
-          phone: profile.phone,
+          phone: profile.phone.replace(/\D/g, ''),
           cep: profile.cep,
           street: profile.street,
           number: profile.number,
@@ -224,7 +225,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
           name: profile.name,
           email: profile.email,
           cpf: profile.cpf.replace(/\D/g, ''),
-          phone: profile.phone,
+          phone: profile.phone.replace(/\D/g, ''),
           cep: profile.cep,
           street: profile.street,
           number: profile.number,
@@ -260,6 +261,8 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
       </div>
     );
   }
+
+  const inputClass = "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
@@ -350,10 +353,9 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                     type="text"
                     value={profile.name}
                     onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className={inputClass}
                     placeholder="Seu nome"
                     disabled={!isEditing}
-                    required
                   />
                 </div>
 
@@ -366,10 +368,9 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                     type="email"
                     value={profile.email}
                     onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className={inputClass}
                     placeholder="seu@email.com"
                     disabled={!isEditing}
-                    required
                   />
                 </div>
 
@@ -382,11 +383,10 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                     type="text"
                     value={maskCpf(profile.cpf)}
                     onChange={(e) => setProfile({ ...profile, cpf: e.target.value.replace(/\D/g, '') })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className={inputClass}
                     placeholder="000.000.000-00"
                     maxLength={14}
                     disabled={!isEditing}
-                    required
                   />
                 </div>
 
@@ -399,17 +399,16 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                     type="tel"
                     value={maskPhone(profile.phone)}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value.replace(/\D/g, '') })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className={inputClass}
                     placeholder="(00) 00000-0000"
                     maxLength={15}
                     disabled={!isEditing}
-                    required
                   />
                 </div>
               </div>
 
               <div className="border-t pt-6">
-                <h3 className="text-xl font-bold text-black mb-4">Endereço</h3>
+                <h3 className="text-xl font-bold text-black mb-4">Endereco</h3>
 
                 <div className="space-y-6">
                   <div>
@@ -421,14 +420,13 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                       type="text"
                       value={maskCep(profile.cep)}
                       onChange={(e) => handleCepChange(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className={inputClass}
                       placeholder="00000-000"
                       maxLength={9}
                       disabled={!isEditing}
-                      required
                     />
                     {loadingCep && (
-                      <p className="text-sm text-gray-500 mt-1">Buscando endereço...</p>
+                      <p className="text-sm text-gray-500 mt-1">Buscando endereco...</p>
                     )}
                   </div>
 
@@ -441,26 +439,25 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                       type="text"
                       value={profile.street}
                       onChange={(e) => setProfile({ ...profile, street: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent bg-gray-100"
+                      className={inputClass}
                       placeholder="Nome da rua"
-                      readOnly
+                      disabled={!isEditing}
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
-                        Número <span className="text-red-500">*</span>
+                        Numero <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="number"
                         type="text"
                         value={profile.number}
                         onChange={(e) => setProfile({ ...profile, number: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className={inputClass}
                         placeholder="123"
                         disabled={!isEditing}
-                        required
                       />
                     </div>
 
@@ -473,7 +470,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                         type="text"
                         value={profile.complement}
                         onChange={(e) => setProfile({ ...profile, complement: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className={inputClass}
                         placeholder="Apt, Bloco, etc"
                         disabled={!isEditing}
                       />
@@ -489,9 +486,9 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                       type="text"
                       value={profile.neighborhood}
                       onChange={(e) => setProfile({ ...profile, neighborhood: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent bg-gray-100"
+                      className={inputClass}
                       placeholder="Bairro"
-                      readOnly
+                      disabled={!isEditing}
                     />
                   </div>
 
@@ -505,9 +502,9 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                         type="text"
                         value={profile.city}
                         onChange={(e) => setProfile({ ...profile, city: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent bg-gray-100"
+                        className={inputClass}
                         placeholder="Cidade"
-                        readOnly
+                        disabled={!isEditing}
                       />
                     </div>
 
@@ -519,11 +516,11 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                         id="state"
                         type="text"
                         value={profile.state}
-                        onChange={(e) => setProfile({ ...profile, state: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent bg-gray-100"
+                        onChange={(e) => setProfile({ ...profile, state: e.target.value.toUpperCase() })}
+                        className={inputClass}
                         placeholder="UF"
-                        readOnly
                         maxLength={2}
+                        disabled={!isEditing}
                       />
                     </div>
                   </div>
@@ -547,7 +544,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                     disabled={saving}
                     className="flex-1 bg-[#00ff00] text-black py-3 rounded-lg font-semibold hover:bg-[#00dd00] transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {saving ? 'Salvando...' : 'Salvar Alterações'}
+                    {saving ? 'Salvando...' : 'Salvar Alteracoes'}
                   </button>
                 </div>
               )}
@@ -556,7 +553,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
               <div className="space-y-4">
                 {orders.length === 0 ? (
                   <div className="text-center py-12">
-                    <p className="text-gray-600">Você ainda não fez nenhum pedido</p>
+                    <p className="text-gray-600">Voce ainda nao fez nenhum pedido</p>
                   </div>
                 ) : (
                   orders.map((order) => (
@@ -622,7 +619,7 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
                               Pagamento confirmado!
                             </p>
                             <p className="text-xs text-green-600 mt-1">
-                              Seu pedido foi enviado para o WhatsApp e está sendo processado.
+                              Seu pedido foi enviado para o WhatsApp e esta sendo processado.
                             </p>
                           </div>
                         )}

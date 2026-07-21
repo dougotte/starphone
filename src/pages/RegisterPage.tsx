@@ -45,6 +45,7 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
+  const [addressEditable, setAddressEditable] = useState(false);
 
   const maskCpf = (value: string) => {
     const d = value.replace(/\D/g, '').slice(0, 11);
@@ -56,10 +57,11 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
 
   const maskPhone = (value: string) => {
     const d = value.replace(/\D/g, '').slice(0, 11);
-    if (d.length <= 10) {
-      return d.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)$/, '$1-$2');
-    }
-    return d.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)$/, '$1-$2');
+    if (d.length === 0) return '';
+    if (d.length <= 2) return `(${d}`;
+    if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
   };
 
   const maskCep = (value: string) => {
@@ -83,8 +85,10 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
           city: result.city || prev.city,
           state: result.state || prev.state,
         }));
+        setAddressEditable(true);
       } else {
-        setError('CEP nao encontrado. Verifique o numero ou preencha manualmente.');
+        setAddressEditable(true);
+        setError('CEP nao encontrado. Preencha o endereco manualmente.');
       }
       setLoadingCep(false);
     }
@@ -136,6 +140,9 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
 
   const inputClass =
     'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00ff00] focus:border-transparent transition-colors';
+
+  const disabledInputClass =
+    'w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-100 text-gray-400 cursor-not-allowed';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
@@ -313,8 +320,9 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
                       type="text"
                       value={form.street}
                       onChange={(e) => setForm({ ...form, street: e.target.value })}
-                      className={inputClass}
+                      className={addressEditable ? inputClass : disabledInputClass}
                       placeholder="Nome da rua"
+                      disabled={!addressEditable}
                     />
                   </div>
 
@@ -327,8 +335,9 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
                         type="text"
                         value={form.number}
                         onChange={(e) => setForm({ ...form, number: e.target.value })}
-                        className={inputClass}
+                        className={addressEditable ? inputClass : disabledInputClass}
                         placeholder="123"
+                        disabled={!addressEditable}
                       />
                     </div>
                     <div>
@@ -339,8 +348,9 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
                         type="text"
                         value={form.complement}
                         onChange={(e) => setForm({ ...form, complement: e.target.value })}
-                        className={inputClass}
+                        className={addressEditable ? inputClass : disabledInputClass}
                         placeholder="Apt, Bloco (opcional)"
+                        disabled={!addressEditable}
                       />
                     </div>
                   </div>
@@ -353,8 +363,9 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
                       type="text"
                       value={form.neighborhood}
                       onChange={(e) => setForm({ ...form, neighborhood: e.target.value })}
-                      className={inputClass}
+                      className={addressEditable ? inputClass : disabledInputClass}
                       placeholder="Bairro"
+                      disabled={!addressEditable}
                     />
                   </div>
 
@@ -367,8 +378,9 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
                         type="text"
                         value={form.city}
                         onChange={(e) => setForm({ ...form, city: e.target.value })}
-                        className={inputClass}
+                        className={addressEditable ? inputClass : disabledInputClass}
                         placeholder="Cidade"
+                        disabled={!addressEditable}
                       />
                     </div>
                     <div>
@@ -379,9 +391,10 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
                         type="text"
                         value={form.state}
                         onChange={(e) => setForm({ ...form, state: e.target.value.toUpperCase() })}
-                        className={inputClass}
+                        className={addressEditable ? inputClass : disabledInputClass}
                         placeholder="UF"
                         maxLength={2}
+                        disabled={!addressEditable}
                       />
                     </div>
                   </div>
