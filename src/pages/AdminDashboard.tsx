@@ -184,7 +184,9 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
 
 
   useEffect(() => {
-    loadAllData();
+    supabase.auth.getSession().then(() => {
+      loadAllData();
+    });
   }, []);
 
   useEffect(() => {
@@ -966,7 +968,11 @@ export default function AdminDashboard({ onNavigate }: { onNavigate: (page: Page
               ].map(tab => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key as any)}
+                  onClick={() => {
+                    setActiveTab(tab.key as any);
+                    if (tab.key === 'clients') loadClients();
+                    if (tab.key === 'orders') loadOrders();
+                  }}
                   className={`pb-3 px-4 font-semibold flex items-center space-x-2 whitespace-nowrap ${
                     activeTab === tab.key
                       ? 'text-[#00ff00] border-b-2 border-[#00ff00]'

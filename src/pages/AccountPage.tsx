@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, LogOut, User as UserIcon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { fetchCep } from '../utils/cep';
 
 type PageType = 'home' | 'login' | 'register' | 'account' | 'admin-login' | 'admin-dashboard';
 
@@ -131,29 +132,23 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
 
   const handleCepChange = async (cep: string) => {
     const cleanCep = cep.replace(/\D/g, '').slice(0, 8);
-    setProfile({ ...profile, cep: cleanCep });
+    setProfile((prev) => ({ ...prev, cep: cleanCep }));
 
     if (cleanCep.length === 8) {
       setLoadingCep(true);
-      try {
-        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        const data = await response.json();
-
-        if (!data.erro) {
-          setProfile({
-            ...profile,
-            cep: cleanCep,
-            street: data.logradouro || '',
-            neighborhood: data.bairro || '',
-            city: data.localidade || '',
-            state: data.uf || '',
-          });
-        } else {
-          setMessage('CEP não encontrado');
-        }
-      } catch (error) {
-        console.error('Error fetching CEP:', error);
-        setMessage('Erro ao buscar CEP');
+      setMessage('');
+      const result = await fetchCep(cleanCep);
+      if (result) {
+        setProfile((prev) => ({
+          ...prev,
+          cep: cleanCep,
+          street: result.street || prev.street,
+          neighborhood: result.neighborhood || prev.neighborhood,
+          city: result.city || prev.city,
+          state: result.state || prev.state,
+        }));
+      } else {
+        setMessage('CEP nao encontrado. Preencha o endereco manualmente.');
       }
       setLoadingCep(false);
     }

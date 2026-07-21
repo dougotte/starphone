@@ -2,11 +2,24 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
+export type SignUpProfileData = {
+  name?: string;
+  cpf?: string;
+  phone?: string;
+  cep?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+};
+
 type AuthContextType = {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, profileData?: SignUpProfileData) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInAdmin: (username: string, password: string) => Promise<{ error: any; adminData?: any }>;
   signOut: () => Promise<void>;
@@ -93,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPurchaseLocked(data?.purchase_locked ?? false);
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, profileData?: SignUpProfileData) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -104,6 +117,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('user_profiles')
         .insert({
           user_id: data.user.id,
+          name: profileData?.name || '',
+          email: email,
+          cpf: profileData?.cpf || '',
+          phone: profileData?.phone || '',
+          cep: profileData?.cep || '',
+          street: profileData?.street || '',
+          number: profileData?.number || '',
+          complement: profileData?.complement || '',
+          neighborhood: profileData?.neighborhood || '',
+          city: profileData?.city || '',
+          state: profileData?.state || '',
         });
 
       if (profileError) {
