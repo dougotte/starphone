@@ -115,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!error && data.user) {
       const { error: profileError } = await supabase
         .from('user_profiles')
-        .insert({
+        .upsert({
           user_id: data.user.id,
           name: profileData?.name || '',
           email: email,
@@ -128,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           neighborhood: profileData?.neighborhood || '',
           city: profileData?.city || '',
           state: profileData?.state || '',
-        });
+        }, { onConflict: 'user_id' });
 
       if (profileError) {
         console.error('Error creating profile:', profileError);
