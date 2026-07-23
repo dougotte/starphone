@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchCep } from '../utils/cep';
@@ -46,6 +46,13 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
   const [addressEditable, setAddressEditable] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [error]);
 
   const maskCpf = (value: string) => {
     const d = value.replace(/\D/g, '').slice(0, 11);
@@ -165,7 +172,7 @@ export default function RegisterPage({ onNavigate }: { onNavigate: (page: PageTy
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm">
+                <div ref={errorRef} className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm">
                   <p>{error}</p>
                   {error.includes('ja esta cadastrado') && (
                     <div className="mt-2 flex gap-3">

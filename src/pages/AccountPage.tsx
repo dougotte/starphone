@@ -57,8 +57,23 @@ export default function AccountPage({ onNavigate }: { onNavigate: (page: PageTyp
   const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile');
 
   useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
     loadProfile();
     loadOrders();
+
+    const timer = setTimeout(() => {
+      if (!cancelled) {
+        loadProfile();
+      }
+    }, 2000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadProfile = async () => {
